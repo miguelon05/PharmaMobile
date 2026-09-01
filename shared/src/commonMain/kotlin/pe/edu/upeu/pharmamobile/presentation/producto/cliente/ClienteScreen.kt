@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -15,9 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import pe.edu.upeu.pharmamobile.domain.model.Cliente
 
 @Composable
 fun ClienteScreen() {
@@ -34,29 +31,33 @@ fun ClienteScreen() {
         mutableStateOf("")
     }
 
-    var nombreError by remember {
-        mutableStateOf<String?>(null)
+    var intentoRegistrar by remember {
+        mutableStateOf(false)
     }
 
-    var correoError by remember {
-        mutableStateOf<String?>(null)
+    var nombreTocado by remember {
+        mutableStateOf(false)
     }
 
-    var telefonoError by remember {
-        mutableStateOf<String?>(null)
+    var correoTocado by remember {
+        mutableStateOf(false)
+    }
+
+    var telefonoTocado by remember {
+        mutableStateOf(false)
     }
 
     var mensajeExito by remember {
         mutableStateOf<String?>(null)
     }
 
-    fun validar(): Boolean {
-        nombreError = ClienteValidator.validarNombre(nombre)
-        correoError = ClienteValidator.validarCorreo(correo)
-        telefonoError = ClienteValidator.validarTelefono(telefono)
-
-        return nombreError == null && correoError == null && telefonoError == null
-    }
+    val nombreError = ClienteValidator.validarNombre(nombre)
+    val correoError = ClienteValidator.validarCorreo(correo)
+    val telefonoError = ClienteValidator.validarTelefono(telefono)
+    val mostrarNombreError = (nombreTocado || intentoRegistrar) && nombreError != null
+    val mostrarCorreoError = (correoTocado || intentoRegistrar) && correoError != null
+    val mostrarTelefonoError = (telefonoTocado || intentoRegistrar) && telefonoError != null
+    val formularioValido = nombreError == null && correoError == null && telefonoError == null
 
     Column(
         modifier = Modifier
@@ -70,39 +71,57 @@ fun ClienteScreen() {
 
         OutlinedTextField(
             value = nombre,
-            onValueChange = { nombre = it },
+            onValueChange = {
+                nombre = it
+                nombreTocado = true
+                mensajeExito = null
+            },
             label = {
                 Text("Nombre")
             },
-            isError = nombreError != null,
+            isError = mostrarNombreError,
             supportingText = {
-                nombreError?.let { Text(it) }
+                if (mostrarNombreError) {
+                    Text(nombreError)
+                }
             },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = correo,
-            onValueChange = { correo = it },
+            onValueChange = {
+                correo = it
+                correoTocado = true
+                mensajeExito = null
+            },
             label = {
                 Text("Correo")
             },
-            isError = correoError != null,
+            isError = mostrarCorreoError,
             supportingText = {
-                correoError?.let { Text(it) }
+                if (mostrarCorreoError) {
+                    Text(correoError)
+                }
             },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = telefono,
-            onValueChange = { telefono = it },
+            onValueChange = {
+                telefono = it
+                telefonoTocado = true
+                mensajeExito = null
+            },
             label = {
                 Text("Teléfono (opcional)")
             },
-            isError = telefonoError != null,
+            isError = mostrarTelefonoError,
             supportingText = {
-                telefonoError?.let { Text(it) }
+                if (mostrarTelefonoError) {
+                    Text(telefonoError)
+                }
             },
             modifier = Modifier.fillMaxWidth()
         )
@@ -110,11 +129,16 @@ fun ClienteScreen() {
         Button(
             onClick = {
                 mensajeExito = null
-                if (validar()) {
+                intentoRegistrar = true
+                if (formularioValido) {
                     mensajeExito = "Cliente \"$nombre\" registrado correctamente"
                     nombre = ""
                     correo = ""
                     telefono = ""
+                    intentoRegistrar = false
+                    nombreTocado = false
+                    correoTocado = false
+                    telefonoTocado = false
                 }
             },
             modifier = Modifier.fillMaxWidth()

@@ -39,6 +39,18 @@ fun ProductoScreen() {
         mutableStateOf(false)
     }
 
+    var nombreTocado by remember {
+        mutableStateOf(false)
+    }
+
+    var precioTocado by remember {
+        mutableStateOf(false)
+    }
+
+    var stockTocado by remember {
+        mutableStateOf(false)
+    }
+
     val precioValor = precio.toDoubleOrNull()
     val stockValor = stock.toIntOrNull()
     val nombreError = if (nombre.isBlank()) "El nombre es obligatorio." else null
@@ -52,6 +64,9 @@ fun ProductoScreen() {
         stockValor < 0 -> "El stock no puede ser negativo."
         else -> null
     }
+    val mostrarNombreError = (nombreTocado || intentoRegistrar) && nombreError != null
+    val mostrarPrecioError = (precioTocado || intentoRegistrar) && precioError != null
+    val mostrarStockError = (stockTocado || intentoRegistrar) && stockError != null
 
     Column(
         modifier = Modifier
@@ -67,14 +82,15 @@ fun ProductoScreen() {
             value = nombre,
             onValueChange = {
                 nombre = it
+                nombreTocado = true
                 mensaje = ""
             },
             label = {
                 Text("Nombre")
             },
-            isError = intentoRegistrar && nombreError != null,
+            isError = mostrarNombreError,
             supportingText = {
-                if (intentoRegistrar && nombreError != null) {
+                if (mostrarNombreError) {
                     Text(nombreError)
                 }
             },
@@ -85,14 +101,15 @@ fun ProductoScreen() {
             value = precio,
             onValueChange = {
                 precio = it
+                precioTocado = true
                 mensaje = ""
             },
             label = {
                 Text("Precio")
             },
-            isError = intentoRegistrar && precioError != null,
+            isError = mostrarPrecioError,
             supportingText = {
-                if (intentoRegistrar && precioError != null) {
+                if (mostrarPrecioError) {
                     Text(precioError)
                 }
             },
@@ -103,14 +120,15 @@ fun ProductoScreen() {
             value = stock,
             onValueChange = {
                 stock = it
+                stockTocado = true
                 mensaje = ""
             },
             label = {
                 Text("Stock")
             },
-            isError = intentoRegistrar && stockError != null,
+            isError = mostrarStockError,
             supportingText = {
-                if (intentoRegistrar && stockError != null) {
+                if (mostrarStockError) {
                     Text(stockError)
                 }
             },
@@ -140,6 +158,9 @@ fun ProductoScreen() {
                     nombre = ""
                     precio = ""
                     stock = ""
+                    nombreTocado = false
+                    precioTocado = false
+                    stockTocado = false
                 }
             },
             modifier = Modifier.fillMaxWidth()
