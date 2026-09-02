@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobile.navigation.Screen
 import pe.edu.upeu.pharmamobile.presentation.producto.Inicio.InicioScreen
 import pe.edu.upeu.pharmamobile.presentation.producto.cliente.ClienteScreen
+import pe.edu.upeu.pharmamobile.presentation.producto.pedido.PedidoScreen
 import pe.edu.upeu.pharmamobile.presentation.producto.producto.ProductoScreen
 import pe.edu.upeu.pharmamobile.theme.PharmaMobilTheme
 
@@ -262,7 +263,7 @@ fun App() {
                                 .padding(paddingValues)
                         ) {
 
-                            Text("Pantalla de pedidos en construcción")
+                            PedidoScreen()
                         }
                     }
                 }
@@ -312,36 +313,4 @@ private fun tituloPantalla(
         Screen.Pedidos ->
             "Pedidos"
     }
-
-    /*
-    MaterialTheme {
-
-        val productoRepository = remember { ProductoRepository() }
-
-        var tabSeleccionado by rememberSaveable { mutableStateOf(0) }
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeContentPadding()
-        ) {
-
-            PrimaryTabRow(selectedTabIndex = tabSeleccionado) {
-                TITULOS.forEachIndexed { indice, titulo ->
-                    Tab(
-                        selected = tabSeleccionado == indice,
-                        onClick = { tabSeleccionado = indice },
-                        text = { Text(titulo) }
-                    )
-                }
-            }
-
-            when (tabSeleccionado) {
-                0 -> ClienteScreen()
-                else -> ProductoScreen(
-                    onRegistrar = { productoRepository.registrar(it) }
-                )
-            }
-        }
-    }*/
 }
