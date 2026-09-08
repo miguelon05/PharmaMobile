@@ -19,7 +19,7 @@ kotlin {
     }
     
     android {
-       namespace = "pe.edu.upeu.pharmamobile.shared"
+       namespace = "pe.edu.upeu.pharmamobil.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     
@@ -43,12 +43,18 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
+            // api: MainApplication (androidApp) usa androidContext() al arrancar Koin.
+            api(libs.koin.android)
         }
         commonMain.dependencies {
+            // api: androidApp llama a initKoin(), cuya firma expone KoinAppDeclaration.
+            api(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
-            implementation(libs.compose.icons.extended)
+            implementation(libs.compose.material.icons.extended)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
@@ -57,10 +63,16 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+tasks.withType<Test>().configureEach {
+    testLogging {
+        showStandardStreams = true
+    }
 }

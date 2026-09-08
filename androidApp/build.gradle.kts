@@ -20,11 +20,11 @@ dependencies {
 }
 
 android {
-    namespace = "pe.edu.upeu.pharmamobile"
+    namespace = "pe.edu.upeu.pharmamobil"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "pe.edu.upeu.pharmamobile"
+        applicationId = "pe.edu.upeu.pharmamobil"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

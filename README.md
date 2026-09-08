@@ -12,7 +12,6 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
     Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
     folder is the appropriate location.
 
-# PharmaMobile - Aplicación móvil de gestión farmacéutica
 ### Running the apps
 
 Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
