@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="pe.edu.upeu.pharmamobil.di.AppModuleTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-14T03:06:00.902Z" hostname="MIGUELON" time="0.057">
+  <properties/>
+  <testcase name="resuelveLosViewModelConSusCasosDeUso" classname="pe.edu.upeu.pharmamobil.di.AppModuleTest" time="0.055"/>
+  <testcase name="losRepositoriosSonUnicosEnTodaLaAplicacion" classname="pe.edu.upeu.pharmamobil.di.AppModuleTest" time="0.0"/>
+  <testcase name="resuelveLosRepositoriosPorSuInterfazDeDominio" classname="pe.edu.upeu.pharmamobil.di.AppModuleTest" time="0.002"/>
+  <testcase name="resuelveLosCuatroCasosDeUsoConSusRepositorios" classname="pe.edu.upeu.pharmamobil.di.AppModuleTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

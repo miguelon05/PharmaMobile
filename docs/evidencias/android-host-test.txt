@@ -1,0 +1,72 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Daemon JVM discovery is an incubating feature.
+Calculating task graph as configuration cache cannot be reused because init script '..\..\..\AppData\Local\Temp\ijMapper1.gradle' and 4 more have been removed.
+
+> Configure project :shared
+w: Native task 'iosSimulatorArm64Test' is disabled
+Task 'iosSimulatorArm64Test' for target 'ios_simulator_arm64' cannot run on the current host (windows-x86_64).
+Reason: simulator tests require macOS
+Solution: To suppress this warning, add 'kotlin.native.ignoreDisabledTargets=true' to gradle.properties.
+
+
+> Task :shared:generateAndroidHostTestAssets UP-TO-DATE
+> Task :shared:generateAndroidMainAssets UP-TO-DATE
+> Task :shared:androidPreBuild UP-TO-DATE
+> Task :shared:preAndroidMainBuild UP-TO-DATE
+> Task :shared:preAndroidHostTestBuild UP-TO-DATE
+> Task :shared:processAndroidHostTestJavaRes NO-SOURCE
+> Task :shared:convertXmlValueResourcesForCommonTest NO-SOURCE
+> Task :shared:convertXmlValueResourcesForAndroidHostTest NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForAndroidHostTest NO-SOURCE
+> Task :shared:copyNonXmlValueResourcesForCommonTest NO-SOURCE
+> Task :shared:convertXmlValueResourcesForAndroidMain NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForCommonTest NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForAndroidMain NO-SOURCE
+> Task :shared:prepareComposeResourcesTaskForAndroidHostTest NO-SOURCE
+> Task :shared:generateResourceAccessorsForAndroidMain NO-SOURCE
+> Task :shared:generateResourceAccessorsForCommonTest NO-SOURCE
+> Task :shared:generateResourceAccessorsForAndroidHostTest NO-SOURCE
+> Task :shared:kmpPartiallyResolvedDependenciesChecker
+> Task :shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :shared:copyNonXmlValueResourcesForCommonMain
+> Task :shared:convertXmlValueResourcesForCommonMain NO-SOURCE
+> Task :shared:generateAndroidMainEmptyResourceFiles
+> Task :shared:prepareComposeResourcesTaskForCommonMain
+> Task :shared:androidJar
+> Task :shared:writeAndroidMainAarMetadata
+> Task :shared:copyAndroidMainComposeResourcesToAndroidAssets
+> Task :shared:generateAndroidHostTestResources
+> Task :shared:generateExpectResourceCollectorsForCommonMain
+> Task :shared:generateResourceAccessorsForCommonMain
+> Task :shared:generateComposeResClass
+> Task :shared:generateActualResourceCollectorsForAndroidMain
+> Task :shared:mergeAndroidMainAssets
+> Task :shared:packageAndroidMainResources
+> Task :shared:compileAndroidMainLibraryResources
+> Task :shared:processAndroidMainManifest
+> Task :shared:parseAndroidMainLocalResources
+> Task :shared:mapAndroidHostTestSourceSetPaths
+> Task :shared:mergeAndroidHostTestAssets
+> Task :shared:checkAndroidHostTestAarMetadata
+> Task :shared:generateAndroidMainRFile
+> Task :shared:processAndroidHostTestManifest
+> Task :shared:mergeAndroidHostTestResources
+> Task :shared:processAndroidHostTestResources
+> Task :shared:packageAndroidHostTestForUnitTest
+> Task :shared:generateAndroidHostTestConfig
+
+> Task :shared:compileAndroidMain
+w: file:///C:/Users/mygna/OneDrive/Escritorio/PHARMAMOBIL%20ACEVEDO/shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/App.kt:85:13 'fun KoinContext(koin: Koin = ..., content: ComposableFunction0<Unit>): Unit' is deprecated. KoinContext is not needed anymore. This can be removed. Compose Koin context is setup with StartKoin().
+
+> Task :shared:processAndroidMainJavaRes
+> Task :shared:bundleAndroidMainClassesToCompileJar
+> Task :shared:bundleAndroidMainClassesToRuntimeJar
+> Task :shared:compileAndroidHostTest
+> Task :shared:testAndroidHostTest
+
+[Incubating] Problems report is available at: file:///C:/Users/mygna/OneDrive/Escritorio/PHARMAMOBIL%20ACEVEDO/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 36s
+32 actionable tasks: 32 executed
+Configuration cache entry stored.
