@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Medication
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -27,12 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
-import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
-import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
 
 @Composable
 fun ProductoScreen(
@@ -49,19 +45,13 @@ fun ProductoScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        FormularioProductoCard(
-            formulario = uiState.formulario,
-            registrando = uiState.registrando,
-            onNombreChange = viewModel::onNombreChange,
-            onPrecioChange = viewModel::onPrecioChange,
-            onStockChange = viewModel::onStockChange,
-            onRegistrar = viewModel::registrar
-        )
-
-        uiState.mensajeExito?.let {
-            MensajeExito(it)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Productos", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            FilledTonalButton(
+                onClick = viewModel::cargarProductos,
+                enabled = uiState.fase != ProductoUiState.Fase.Cargando
+            ) { Text("Actualizar") }
         }
-
         EncabezadoInventario(uiState.fase)
 
         Box(
@@ -92,7 +82,7 @@ fun ProductoScreen(
                     EstadoVacio(
                         icono = Icons.Default.Inventory2,
                         titulo = "Todavía no hay productos",
-                        descripcion = "Registra el primero con el formulario de arriba.",
+                        descripcion = "La consulta terminó correctamente. El servidor todavía no tiene productos.",
                         modifier = Modifier.align(Alignment.Center)
                     )
 
@@ -121,77 +111,6 @@ fun ProductoScreen(
                             }
                         }
                     )
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun FormularioProductoCard(
-    formulario: FormularioProducto,
-    registrando: Boolean,
-    onNombreChange: (String) -> Unit,
-    onPrecioChange: (String) -> Unit,
-    onStockChange: (String) -> Unit,
-    onRegistrar: () -> Unit
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            Text(
-                text = "Registrar producto",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            ValidatedTextField(
-                value = formulario.nombre,
-                onValueChange = onNombreChange,
-                label = "Nombre",
-                error = formulario.nombreError,
-                leadingIcon = Icons.Default.Medication,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                ValidatedTextField(
-                    value = formulario.precio,
-                    onValueChange = onPrecioChange,
-                    label = "Precio",
-                    error = formulario.precioError,
-                    ayuda = "En soles",
-                    keyboardType = KeyboardType.Decimal,
-                    modifier = Modifier.weight(1f)
-                )
-
-                ValidatedTextField(
-                    value = formulario.stock,
-                    onValueChange = onStockChange,
-                    label = "Stock",
-                    error = formulario.stockError,
-                    ayuda = "Unidades",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Button(
-                onClick = onRegistrar,
-                enabled = !registrando,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (registrando) "Registrando…" else "Registrar")
             }
         }
     }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
@@ -19,14 +20,15 @@ class ProductoViewModel(
 
     private val _uiState = MutableStateFlow(ProductoUiState())
     val uiState: StateFlow<ProductoUiState> = _uiState.asStateFlow()
+    private var carga: Job? = null
 
     init {
         cargarProductos()
     }
 
     fun cargarProductos() {
-
-        viewModelScope.launch {
+        carga?.cancel()
+        carga = viewModelScope.launch {
 
             _uiState.update {
                 it.copy(fase = ProductoUiState.Fase.Cargando)
