@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Medication
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -131,7 +134,8 @@ fun ProductoScreen(
                                 producto = producto,
                                 operacion = uiState.operacion,
                                 onEdit = { viewModel.seleccionarProductoParaEditar(producto) },
-                                onDelete = { viewModel.eliminar(producto.id) }
+                                onDelete = { viewModel.eliminar(producto.id) },
+                                onCompartir = { viewModel.compartir(producto) }
                             )
                         }
                     }
@@ -279,7 +283,8 @@ private fun ProductoItem(
     producto: ProductoUi,
     operacion: ProductoUiState.Operacion,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onCompartir: () -> Unit
 ) {
     val enEliminacion = operacion is ProductoUiState.Operacion.EnCurso && 
             operacion.tipo == ProductoUiState.Operacion.Tipo.Eliminar
@@ -324,6 +329,16 @@ private fun ProductoItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                
+                Button(
+                    onClick = onCompartir,
+                    enabled = !inactivo,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Compartir")
+                }
             }
 
             if (producto.requiereReposicion) {
