@@ -8,14 +8,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 
-
 class ProductoViewModel(
     private val registrarProducto: RegistrarProductoUseCase,
-    private val listarProductos: ListarProductosUseCase
+    private val listarProductos: ListarProductosUseCase,
+    private val actualizarProductoUseCase: ActualizarProductoUseCase,
+    private val eliminarProductoUseCase: EliminarProductoUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductoUiState())
@@ -29,7 +34,6 @@ class ProductoViewModel(
     fun cargarProductos() {
         carga?.cancel()
         carga = viewModelScope.launch {
-
             _uiState.update {
                 it.copy(fase = ProductoUiState.Fase.Cargando)
             }
@@ -82,58 +86,122 @@ class ProductoViewModel(
         }
     }
 
-    fun registrar() {
+    fun seleccionarProductoParaEditar(producto: ProductoUi) {
+        _uiState.update {
+            it.copy(
+                formulario = FormularioProducto(
+                    id = producto.id,
+                    nombre = producto.nombre,
+                    precio = producto.precio.toString(),
+                    stock = producto.stock.toString()
+                ),
+                mensajeExito = null
+            )
+        }
+    }
 
-        if (_uiState.value.registrando) return
+    fun cancelarEdicion() {
+        _uiState.update {
+            it.copy(formulario = FormularioProducto(), mensajeExito = null)
+        }
+    }
+
+    fun registrar() {
+        if (_uiState.value.operacion !is ProductoUiState.Operacion.Inactiva) return
+
+        val formulario = _uiState.value.formulario
+        val esEdicion = formulario.id != null
 
         viewModelScope.launch {
-
+            val tipoOperacion = if (esEdicion) ProductoUiState.Operacion.Tipo.Actualizar else ProductoUiState.Operacion.Tipo.Crear
             _uiState.update {
-                it.copy(registrando = true, mensajeExito = null)
+                it.copy(operacion = ProductoUiState.Operacion.EnCurso(tipoOperacion), mensajeExito = null)
             }
 
-            val formulario = _uiState.value.formulario
+            val resultado = if (esEdicion) {
+                actualizarProductoUseCase(
+                    id = formulario.id!!,
+                    nombre = formulario.nombre,
+                    precio = formulario.precio,
+                    stock = formulario.stock
+                )
+            } else {
+                registrarProducto(
+                    nombre = formulario.nombre,
+                    precio = formulario.precio,
+                    stock = formulario.stock
+                )
+            }
 
-            registrarProducto(
-                nombre = formulario.nombre,
-                precio = formulario.precio,
-                stock = formulario.stock
-            ).fold(
-                onSuccess = { producto ->
-                    _uiState.update {
-                        it.copy(
-                            registrando = false,
-                            formulario = FormularioProducto(),
-                            mensajeExito = "Producto \"${producto.nombre}\" registrado correctamente"
-                        )
-                    }
+            resultado.onSuccess { producto ->
+                cargarProductos()
+                _uiState.update {
+                    it.copy(
+                        operacion = ProductoUiState.Operacion.Inactiva,
+                        formulario = FormularioProducto(),
+                        mensajeExito = "Producto \"${producto.nombre}\" guardado correctamente"
+                    )
+                }
+            }.onFailure { fallo -> manejarFallo(fallo) }
+        }
+    }
+
+    fun eliminar(id: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(operacion = ProductoUiState.Operacion.EnCurso(ProductoUiState.Operacion.Tipo.Eliminar)) }
+            eliminarProductoUseCase(id)
+                .onSuccess {
                     cargarProductos()
-                },
-                onFailure = { fallo ->
-                    when (fallo) {
-
-                        is ProductoInvalidoException -> _uiState.update {
-                            it.copy(
-                                registrando = false,
-                                formulario = it.formulario.copy(
-                                    nombreError = fallo.errores.nombre,
-                                    precioError = fallo.errores.precio,
-                                    stockError = fallo.errores.stock
-                                )
-                            )
-                        }
-
-                        else -> _uiState.update {
-                            it.copy(
-                                registrando = false,
-                                fase = ProductoUiState.Fase.Error(
-                                    fallo.message ?: "No se pudo registrar el producto"
-                                )
-                            )
-                        }
+                    _uiState.update {
+                        it.copy(operacion = ProductoUiState.Operacion.Inactiva, mensajeExito = "Producto eliminado")
                     }
                 }
-            )
+                .onFailure { fallo -> manejarFallo(fallo) }
+        }
+    }
+
+    private fun manejarFallo(fallo: Throwable) {
+        val error = (fallo as? ErrorApiException)?.error
+
+        if (fallo is ProductoInvalidoException) {
+            _uiState.update {
+                it.copy(
+                    operacion = ProductoUiState.Operacion.Inactiva,
+                    formulario = it.formulario.copy(
+                        nombreError = fallo.errores.nombre,
+                        precioError = fallo.errores.precio,
+                        stockError = fallo.errores.stock
+                    )
+                )
+            }
+            return
+        }
+
+        when (error) {
+            is ErrorApi.Validacion -> _uiState.update {
+                it.copy(
+                    operacion = ProductoUiState.Operacion.Inactiva,
+                    formulario = it.formulario.copy(
+                        nombreError = error.porCampo["nombre"],
+                        precioError = error.porCampo["precio"],
+                        stockError = error.porCampo["stock"]
+                    )
+                )
+            }
+            else -> _uiState.update {
+                it.copy(operacion = ProductoUiState.Operacion.Fallida(mensajeDe(fallo, error)))
+            }
+        }
+    }
+
+    private fun mensajeDe(fallo: Throwable, error: ErrorApi?): String {
+        return when (error) {
+            is ErrorApi.Conflicto -> error.mensaje
+            is ErrorApi.NoEncontrado -> "El registro no existe"
+            ErrorApi.Servidor -> "Error interno del servidor"
+            ErrorApi.SinConexion -> "Revisa tu conexión a internet"
+            ErrorApi.TiempoAgotado -> "El servidor tardó demasiado"
+            else -> fallo.message ?: "Ocurrió un error desconocido"
         }
     }
 }

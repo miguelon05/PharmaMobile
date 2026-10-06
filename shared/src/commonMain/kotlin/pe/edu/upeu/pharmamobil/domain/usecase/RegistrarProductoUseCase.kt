@@ -1,5 +1,6 @@
 package pe.edu.upeu.pharmamobil.domain.usecase
 
+import pe.edu.upeu.pharmamobil.data.remote.ejecutarLlamada
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
@@ -39,7 +40,7 @@ class RegistrarProductoUseCase(
             return Result.failure(ProductoInvalidoException(errores))
         }
 
-        return resultadoDe {
+        return ejecutarLlamada {
             productoRepository.registrar(
                 Producto(
                     id = 0L,
@@ -50,6 +51,7 @@ class RegistrarProductoUseCase(
             )
         }
     }
+
 
     private fun validarNombre(nombre: String): String? {
         return if (nombre.isBlank()) "El nombre es obligatorio" else null

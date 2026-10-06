@@ -1,0 +1,24 @@
+Evidencia: prueba JVM en Windows con Ktor/OkHttp y backend Spring Boot real.
+Certificado y hostname validados con la CA local; sin desactivar TLS.
+No es una captura del emulador ni de iOS.
+
+{'tests': 58, 'failures': 0, 'errors': 0, 'skipped': 0}
+
+PharmaKtor: REQUEST: https://localhost:8443/api/v1/productos?pagina=0&tamanio=20&ordenarPor=id&direccion=asc
+METHOD: GET
+COMMON HEADERS
+-> Accept: application/json
+-> Content-Type: application/json
+CONTENT HEADERS
+-> Content-Length: 0
+PharmaKtor: RESPONSE: 200 
+METHOD: GET
+FROM: https://localhost:8443/api/v1/productos?pagina=0&tamanio=20&ordenarPor=id&direccion=asc
+COMMON HEADERS
+-> connection: keep-alive
+-> content-type: application/json
+-> date: Tue, 29 Sep 2026 21:22:55 GMT
+-> keep-alive: timeout=60
+-> transfer-encoding: chunked
+-> vary: Origin; Access-Control-Request-Method; Access-Control-Request-Headers
+GET real HTTPS 200: 0 productos en pagina 0
