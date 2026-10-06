@@ -199,6 +199,21 @@ En este proyecto, la capa de Presentación de Compose Multiplatform no trata dir
    * **Errores de validación (400):** Extrae el diccionario de campos fallidos y los asigna dinámicamente al estado local (`FormularioProducto`), pintándose justo debajo del `ValidatedTextField` afectado, sin sacar al usuario de la pantalla.
    * **Errores de Red / Servidor (500, Timeout):** Cambia el estado transitorio `Operacion.Fallida(mensaje)` que despliega un banner de error explícito para informarle al usuario qué sucedió y por qué falló la carga.
 
+## Capacidades nativas
+
+1. **Formateo de moneda mediante expect/actual**: En Kotlin Multiplatform, hemos utilizado el patrón `expect`/`actual` para transformar los números a String representando soles en el área de Presentación de manera nativa sin recargar al Common Main con lógicas engorrosas.
+2. **Implementación Android**: Android utiliza `java.text.NumberFormat` y la Localidad ("es", "PE") para dar formato. 
+3. **Implementación iOS**: Al igual, en el `iosMain` se delega en el motor base usando `platform.Foundation.NSNumberFormatter`.
+4. **Compartir mediante interfaz Compartidor**: La posibilidad de enviar a otras Apps los datos en bruto de un ítem se abstrae con la interfaz `Compartidor`, que es independiente de implementaciones.
+5. **Implementación Android con Intent**: Usando `Intent.ACTION_SEND` e inyectando un ApplicationContext desde Koin se levanta un `Intent.createChooser` hacia las demás apps del OS.
+6. **Implementación iOS con UIActivityViewController**: A través del framework `UIKit` (código de Kotlin-Native), se localiza el RootViewController nativo desde `UIApplication.sharedApplication` para desplegar la ventana ShareSheet inferior de iOS.
+7. **Registro mediante Koin**: En cada módulo nativo (`PlatformModule.android.kt` y `.ios.kt`) se inyecta su implementación específica como un `single`.
+8. **Archivos principales**: 
+    - Android: `Formato.android.kt`, `CompartidorAndroid.kt`, `PlatformModule.android.kt`. 
+    - iOS: `Formato.ios.kt`, `CompartidorIos.kt`, `PlatformModule.ios.kt`. 
+    - Common: `Formato.kt`, `Compartidor.kt`, `AppModule.kt`.
+9. **Diferencias Android/iOS**: Mientras Android depende de `Intent` y del `Context` (que Koin tiene que proveer inyectando el `androidContext()`), iOS delega directamente en llamadas estáticas al singleton `UIApplication` a través de los envoltorios nativos de Compose (`UIKit`).
+
 * [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
 
