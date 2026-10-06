@@ -9,7 +9,7 @@ import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import pe.edu.upeu.pharmamobil.data.repository.ClienteRepositorioEnMemoria
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositoryImpl
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
 import pe.edu.upeu.pharmamobil.data.remote.ApiConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
@@ -73,7 +73,7 @@ class AppModuleTest {
 
         val koin = grafoCompleto()
 
-        assertIs<ProductoRepositoryImpl>(koin.get<ProductoRepository>())
+        assertIs<ProductoRepositorioRest>(koin.get<ProductoRepository>())
         assertIs<ClienteRepositorioEnMemoria>(koin.get<ClienteRepository>())
     }
 

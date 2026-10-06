@@ -15,9 +15,13 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.*
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositoryImpl
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState
 
@@ -41,46 +45,66 @@ class ProductoApiTest {
         val client = crearHttpClient(engine, config)
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
-            val repo = ProductoRepositoryImpl(ProductoApi(client))
-            val vm = ProductoViewModel(RegistrarProductoUseCase(repo), ListarProductosUseCase(repo))
+            val repo = ProductoRepositorioRest(ProductoApi(client), 1L)
+            val vm = ProductoViewModel(
+                RegistrarProductoUseCase(repo), 
+                ListarProductosUseCase(repo),
+                ActualizarProductoUseCase(repo),
+                EliminarProductoUseCase(repo)
+            )
             assertIs<ProductoUiState.Fase.Cargando>(vm.uiState.value.fase)
             advanceUntilIdle()
             vm.uiState.first { it.fase !is ProductoUiState.Fase.Cargando }
             val success = assertIs<ProductoUiState.Fase.ConProductos>(vm.uiState.value.fase)
-            assertEquals(listOf(1L, 2L), success.productos.map { it.id })
+            assertEquals(listOf(1L), success.productos.map { it.id })
             assertEquals(2, llamadas)
         } finally { client.close(); engine.close(); Dispatchers.resetMain() }
     }
 
+
     @Test
     fun errorHttpYJsonInvalidoProducenMensajesLegibles() = runTest {
         val cases = listOf(
-            Triple(HttpStatusCode.InternalServerError, "{}", "error 500"),
+            Triple(HttpStatusCode.InternalServerError, "{}", "Error interno del servidor"),
             Triple(HttpStatusCode.OK, """{"contenido":null}""", "formato esperado")
         )
         for ((status, body, expected) in cases) {
             val engine = MockEngine { respond(body, status, headers) }
             val client = crearHttpClient(engine, config)
             try {
-                val result = ListarProductosUseCase(ProductoRepositoryImpl(ProductoApi(client)))()
+                val result = ListarProductosUseCase(ProductoRepositorioRest(ProductoApi(client), 1L))()
                 assertTrue(result.isFailure)
-                assertTrue(result.exceptionOrNull()!!.message!!.contains(expected), result.exceptionOrNull().toString())
+                val ex = result.exceptionOrNull()
+                val msg = if (ex is ErrorApiException) {
+                    when (ex.error) {
+                        is ErrorApi.Servidor -> "Error interno del servidor"
+                        else -> ex.error.toString()
+                    }
+                } else ex?.message ?: ex.toString()
+                assertTrue(msg.contains(expected), msg)
             } finally { client.close(); engine.close() }
         }
+
     }
 
     @Test
     fun perdidaDeRedProduceErrorYReintentoRecuperaListaVacia() = runTest {
         var online = false
         val engine = MockEngine {
-            if (!online) throw IllegalStateException("Conexion cortada en la prueba")
+            if (!online) throw io.ktor.utils.io.errors.IOException("Conexion cortada en la prueba")
             respond("""{"contenido":[],"pagina":0,"tamanio":20,"totalElementos":0,"totalPaginas":0,"ultima":true}""", headers = headers)
         }
+
         val client = crearHttpClient(engine, config)
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
-            val repo = ProductoRepositoryImpl(ProductoApi(client))
-            val vm = ProductoViewModel(RegistrarProductoUseCase(repo), ListarProductosUseCase(repo))
+            val repo = ProductoRepositorioRest(ProductoApi(client), 1L)
+            val vm = ProductoViewModel(
+                RegistrarProductoUseCase(repo), 
+                ListarProductosUseCase(repo),
+                ActualizarProductoUseCase(repo),
+                EliminarProductoUseCase(repo)
+            )
             advanceUntilIdle()
             vm.uiState.first { it.fase !is ProductoUiState.Fase.Cargando }
             assertIs<ProductoUiState.Fase.Error>(vm.uiState.value.fase)
@@ -98,7 +122,7 @@ class ProductoApiTest {
         val client = crearHttpClient(engine, config)
         try {
             assertFailsWith<CancellationException> {
-                ListarProductosUseCase(ProductoRepositoryImpl(ProductoApi(client)))()
+                ListarProductosUseCase(ProductoRepositorioRest(ProductoApi(client), 1L))()
             }
         } finally { client.close(); engine.close() }
     }

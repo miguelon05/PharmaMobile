@@ -189,6 +189,16 @@ Verificación realizada el 29/09/2026: APK debug generado, 58 pruebas aprobadas
 Registro guardado en `docs/evidencias/get-https-200.txt`. No se creó un commit
 ni se publicaron cambios en GitHub en esta sesión.
 
+## Manejo de Errores
+
+En este proyecto, la capa de Presentación de Compose Multiplatform no trata directamente con las excepciones crudas de red (Ktor, OkHttp, etc.). En su lugar, el sistema de errores se gestiona a través de una arquitectura limpia:
+
+1. **Traducción en Datos:** Cualquier llamada de red está envuelta en la función `ejecutarLlamada()`. Esta intercepta excepciones como `ServerResponseException`, `HttpRequestTimeoutException` o el clásico `IOException` y las convierte a una clase sellada del dominio llamada `ErrorApi`. Además, parsea los cuerpos de error `400 Bad Request` leyendo el `validationErrors`.
+2. **Dominio Restrictivo:** Los casos de uso envían sus respuestas usando la envoltura `Result<T>`, asegurando que un fallo viaja de manera segura y verificable a las capas superiores como una `ErrorApiException(ErrorApi)`.
+3. **Consumo en Presentación (MVVM):** `ProductoViewModel` reacciona a dichos errores de dos maneras distintas a través del método `manejarFallo()`:
+   * **Errores de validación (400):** Extrae el diccionario de campos fallidos y los asigna dinámicamente al estado local (`FormularioProducto`), pintándose justo debajo del `ValidatedTextField` afectado, sin sacar al usuario de la pantalla.
+   * **Errores de Red / Servidor (500, Timeout):** Cambia el estado transitorio `Operacion.Fallida(mensaje)` que despliega un banner de error explícito para informarle al usuario qué sucedió y por qué falló la carga.
+
 * [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
 

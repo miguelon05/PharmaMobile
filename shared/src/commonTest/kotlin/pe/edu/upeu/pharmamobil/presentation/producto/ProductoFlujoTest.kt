@@ -9,7 +9,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
+
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,7 +24,7 @@ import kotlin.test.assertNull
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoFlujoTest {
     private class RepositorioControlado(
-        val productos: List<Producto> = emptyList(),
+        var productos: List<Producto> = emptyList(),
         val fallo: Throwable? = null
     ) : ProductoRepository {
         var registros = 0
@@ -37,10 +40,19 @@ class ProductoFlujoTest {
             registros++
             error("Este flujo no debe registrar productos")
         }
+        
+        override suspend fun obtener(id: Long): Producto = productos.first { it.id == id }
+        override suspend fun actualizar(producto: Producto): Producto = producto
+        override suspend fun eliminar(id: Long) {
+             productos = productos.filterNot { it.id == id }
+        }
     }
 
     private fun crear(repo: ProductoRepository) = ProductoViewModel(
-        RegistrarProductoUseCase(repo), ListarProductosUseCase(repo)
+        RegistrarProductoUseCase(repo), 
+        ListarProductosUseCase(repo),
+        ActualizarProductoUseCase(repo),
+        EliminarProductoUseCase(repo)
     )
 
     @Test
@@ -105,7 +117,7 @@ class ProductoFlujoTest {
             assertNull(estado.formulario.nombreError)
             assertNull(estado.formulario.stockError)
             assertNull(estado.mensajeExito)
-            assertFalse(estado.registrando)
+            assertFalse(estado.operacion is ProductoUiState.Operacion.EnCurso)
             assertEquals(ProductoUiState.Fase.SinProductos, estado.fase)
             assertEquals(0, repo.registros)
             assertEquals(listadosAntes, repo.listados)

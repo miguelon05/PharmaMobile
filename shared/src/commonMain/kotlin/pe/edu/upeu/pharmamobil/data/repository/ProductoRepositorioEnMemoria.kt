@@ -6,17 +6,6 @@ import kotlinx.coroutines.sync.withLock
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-/**
- * Almacenamiento en memoria de productos. El id lo asigna el repositorio,
- * no la pantalla, para evitar identificadores duplicados.
- *
- * El delay simula la latencia que traera el backend REST, de modo que el
- * estado de carga de la pantalla sea visible desde ahora.
- *
- * Koin lo registra como single, asi que es un objeto compartido y sus metodos
- * son suspend: nada garantiza que dos llamadas no se crucen. El [Mutex]
- * protege la lista y el contador de ids de esa carrera.
- */
 class ProductoRepositorioEnMemoria : ProductoRepository {
 
     private val candado = Mutex()
@@ -36,6 +25,30 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         delay(RETARDO_LISTADO_MS)
         return candado.withLock {
             productos.toList()
+        }
+    }
+
+    override suspend fun obtener(id: Long): Producto {
+        return candado.withLock {
+            productos.first { it.id == id }
+        }
+    }
+
+    override suspend fun actualizar(producto: Producto): Producto {
+        return candado.withLock {
+            val index = productos.indexOfFirst { it.id == producto.id }
+            if (index >= 0) {
+                productos[index] = producto
+                producto
+            } else {
+                throw IllegalArgumentException("No encontrado")
+            }
+        }
+    }
+
+    override suspend fun eliminar(id: Long) {
+        candado.withLock {
+            productos.removeAll { it.id == id }
         }
     }
 

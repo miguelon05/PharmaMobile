@@ -42,15 +42,19 @@ class RegistrarClienteUseCase(
             return Result.failure(ClienteInvalidoException(errores))
         }
 
-        return resultadoDe {
-            clienteRepository.registrar(
-                Cliente(
-                    id = 0L,
-                    nombre = nombre.trim(),
-                    correo = correo.trim(),
-                    telefono = telefono.trim().ifBlank { null }
+        return try {
+            Result.success(
+                clienteRepository.registrar(
+                    Cliente(
+                        id = 0L,
+                        nombre = nombre.trim(),
+                        correo = correo.trim(),
+                        telefono = telefono.trim().ifBlank { null }
+                    )
                 )
             )
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

@@ -121,14 +121,15 @@ class RegistrarProductoUseCaseTest {
     /** El camino que antes quedaba sin cubrir: el repositorio revienta. */
     @Test
     fun devuelveFailureCuandoElRepositorioFalla() = runTest {
-
+        val errorEsperado = IllegalStateException("Sin conexión")
         val repositorio = FakeProductoRepository().apply {
-            fallaAlRegistrar = IllegalStateException("Sin conexión")
+            fallaAlRegistrar = errorEsperado
         }
 
         val resultado = nuevoCasoDeUso(repositorio)
             .invoke("Paracetamol", "12.50", "5")
 
-        assertEquals("Sin conexión", resultado.exceptionOrNull()?.message)
+        val exception = resultado.exceptionOrNull()
+        assertEquals(errorEsperado, exception)
     }
 }

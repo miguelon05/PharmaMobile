@@ -34,7 +34,7 @@ class BackendHttpsIntegrationTest {
         val engine = OkHttp.create { config { sslSocketFactory(ssl.socketFactory, manager) } }
         val client = crearHttpClient(engine, ApiConfig("https://localhost:8443/api/v1/", loggingEnabled = true))
         try {
-            val page = ProductoApi(client).obtenerPagina()
+            val page = ProductoApi(client).listar(0)
             assertTrue(page.totalElementos >= 0)
             println("GET real HTTPS 200: ${page.contenido.size} productos en pagina ${page.pagina}")
         } finally { client.close(); engine.close() }

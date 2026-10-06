@@ -26,14 +26,14 @@ class ListarProductosUseCaseTest {
 
     @Test
     fun devuelveFailureCuandoElRepositorioFalla() = runTest {
-
+        val errorEsperado = IllegalStateException("Sin conexión")
         val repositorio = FakeProductoRepository().apply {
-            fallaAlListar = IllegalStateException("Sin conexión")
+            fallaAlListar = errorEsperado
         }
 
         val resultado = ListarProductosUseCase(repositorio).invoke()
 
-        assertTrue(resultado.isFailure)
-        assertEquals("Sin conexión", resultado.exceptionOrNull()?.message)
+        val exception = resultado.exceptionOrNull()
+        assertEquals(errorEsperado, exception)
     }
 }

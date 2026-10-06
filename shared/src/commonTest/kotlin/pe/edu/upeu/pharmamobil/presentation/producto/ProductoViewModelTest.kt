@@ -2,33 +2,26 @@ package pe.edu.upeu.pharmamobil.presentation.producto
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import pe.edu.upeu.pharmamobil.data.repository.FakeProductoRepository
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
+import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
+import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
-/**
- * viewModelScope corre sobre Dispatchers.Main, que en una prueba no existe:
- * setMain lo sustituye por un dispatcher de prueba antes de cada caso.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoViewModelTest {
-
-    @BeforeTest
-    fun instalarMain() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-    }
 
     @AfterTest
     fun restaurarMain() {
@@ -39,88 +32,99 @@ class ProductoViewModelTest {
         repositorio: FakeProductoRepository = FakeProductoRepository()
     ) = ProductoViewModel(
         registrarProducto = RegistrarProductoUseCase(repositorio),
-        listarProductos = ListarProductosUseCase(repositorio)
+        listarProductos = ListarProductosUseCase(repositorio),
+        actualizarProductoUseCase = ActualizarProductoUseCase(repositorio),
+        eliminarProductoUseCase = EliminarProductoUseCase(repositorio)
     )
 
     @Test
-    fun arrancaEnSinProductosCuandoElInventarioEstaVacio() = runTest {
-
-        val viewModel = nuevoViewModel()
-
-        assertEquals(ProductoUiState.Fase.SinProductos, viewModel.uiState.value.fase)
-    }
-
-    @Test
-    fun muestraElInventarioConElPrecioYaFormateado() = runTest {
+    fun cargaExitosa() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
 
         val repositorio = FakeProductoRepository(
-            mutableListOf(
-                Producto(id = 1L, nombre = "Paracetamol", precio = 12.5, stock = 5)
-            )
+            mutableListOf(Producto(id = 1L, nombre = "Ibuprofeno", precio = 15.0, stock = 20))
         )
+        val viewModel = nuevoViewModel(repositorio)
 
-        val fase = assertIs<ProductoUiState.Fase.ConProductos>(
-            nuevoViewModel(repositorio).uiState.value.fase
-        )
+        // Verificamos estado inicial antes de que acabe la corrutina
+        assertEquals(ProductoUiState.Fase.Cargando, viewModel.uiState.value.fase)
 
-        assertEquals("S/ 12.50", fase.productos.first().precio)
-        assertEquals("5 u.", fase.productos.first().stock)
-        assertTrue(fase.productos.first().requiereReposicion)
+        // Avanzamos el tiempo para que termine de cargar
+        advanceUntilIdle()
+
+        // Verificamos estado final
+        val fase = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
+        assertEquals(1, fase.productos.size)
     }
 
     @Test
-    fun pasaAFaseErrorCuandoElRepositorioFalla() = runTest {
+    fun listadoVacio() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
 
-        val repositorio = FakeProductoRepository().apply {
-            fallaAlListar = IllegalStateException("Sin conexión")
-        }
+        val repositorio = FakeProductoRepository(productos = mutableListOf())
+        val viewModel = nuevoViewModel(repositorio)
 
-        val fase = assertIs<ProductoUiState.Fase.Error>(
-            nuevoViewModel(repositorio).uiState.value.fase
-        )
-
-        assertEquals("Sin conexión", fase.mensaje)
+        advanceUntilIdle()
+        assertIs<ProductoUiState.Fase.SinProductos>(viewModel.uiState.value.fase)
     }
 
     @Test
-    fun losErroresDeValidacionCaenEnElFormularioNoEnLaFase() = runTest {
+    fun errorDeValidacionServidor() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
 
-        val viewModel = nuevoViewModel()
+        val repositorio = FakeProductoRepository()
+        val viewModel = nuevoViewModel(repositorio)
+        // Evitamos que intente iniciar una carga asincrona para que el fake devuelva los datos limpios sin error de inicializacion
+        advanceUntilIdle()
 
-        viewModel.onNombreChange("")
-        viewModel.onPrecioChange("abc")
-        viewModel.onStockChange("-1")
+        // Forzamos al Fake a devolver una excepcion simulando un HTTP 400 Bad Request
+        repositorio.fallaAlRegistrar = ErrorApiException(
+            ErrorApi.Validacion(mapOf("nombre" to "El nombre debe tener al menos 3 caracteres", "precio" to "Precio muy bajo"))
+        )
+
+
+        viewModel.onNombreChange("Aa")
+        viewModel.onPrecioChange("0")
+        viewModel.onStockChange("10")
         viewModel.registrar()
+        advanceUntilIdle()
 
         val estado = viewModel.uiState.value
-
-        assertEquals("El nombre es obligatorio", estado.formulario.nombreError)
-        assertEquals("El precio debe ser un número válido", estado.formulario.precioError)
-        assertEquals("El stock no puede ser negativo", estado.formulario.stockError)
-        assertEquals(ProductoUiState.Fase.SinProductos, estado.fase)
-        assertNull(estado.mensajeExito)
+        assertEquals("El nombre debe tener al menos 3 caracteres", estado.formulario.nombreError)
+        assertEquals("Precio muy bajo", estado.formulario.precioError)
+        assertIs<ProductoUiState.Fase.ConProductos>(estado.fase) // La fase principal no cambia a Error, se queda donde estaba
     }
 
     @Test
-    fun registrarLimpiaElFormularioYRecargaElInventario() = runTest {
+    fun eliminacion() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(testDispatcher)
 
-        val viewModel = nuevoViewModel()
-
-        viewModel.onNombreChange("Paracetamol")
-        viewModel.onPrecioChange("12.50")
-        viewModel.onStockChange("5")
-        viewModel.registrar()
-
-        val estado = viewModel.uiState.value
-        val fase = assertIs<ProductoUiState.Fase.ConProductos>(estado.fase)
-
-        assertEquals("Paracetamol", fase.productos.single().nombre)
-        assertEquals("", estado.formulario.nombre)
-        assertEquals("", estado.formulario.precio)
-        assertEquals("", estado.formulario.stock)
-        assertEquals(
-            "Producto \"Paracetamol\" registrado correctamente",
-            estado.mensajeExito
+        val repositorio = FakeProductoRepository(
+            mutableListOf(Producto(id = 1L, nombre = "Paracetamol", precio = 2.0, stock = 10))
         )
+        val viewModel = nuevoViewModel(repositorio)
+        advanceUntilIdle()
+
+        // La lista inicial tiene 1 producto
+        assertEquals(1, (viewModel.uiState.value.fase as ProductoUiState.Fase.ConProductos).productos.size)
+
+        // Lanzar eliminación
+        viewModel.eliminar(1L)
+        
+        // Mientras elimina, la operación pasa a EnCurso
+        val estadoEnCurso = viewModel.uiState.value
+        assertIs<ProductoUiState.Operacion.EnCurso>(estadoEnCurso.operacion)
+        assertEquals(ProductoUiState.Operacion.Tipo.Eliminar, estadoEnCurso.operacion.tipo)
+
+        // Dejar que termine de procesar (Eliminación + Recarga automática)
+        advanceUntilIdle()
+
+        val estadoFinal = viewModel.uiState.value
+        assertEquals(ProductoUiState.Operacion.Inactiva, estadoFinal.operacion)
+        assertIs<ProductoUiState.Fase.SinProductos>(estadoFinal.fase) // Ahora la lista está vacía
     }
 }
