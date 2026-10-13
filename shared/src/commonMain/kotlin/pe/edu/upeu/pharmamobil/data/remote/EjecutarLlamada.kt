@@ -6,8 +6,11 @@ import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ServerResponseException
 import io.ktor.utils.io.errors.IOException
 import pe.edu.upeu.pharmamobil.data.remote.dto.ErrorResponseDto
+import pe.edu.upeu.pharmamobil.domain.error.CredencialesInvalidasException
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
+import pe.edu.upeu.pharmamobil.domain.error.SesionExpiradaException
+import pe.edu.upeu.pharmamobil.domain.error.SinPermisoException
 import kotlin.coroutines.cancellation.CancellationException
 
 suspend fun <T> ejecutarLlamada(bloque: suspend () -> T): Result<T> =
@@ -16,7 +19,15 @@ suspend fun <T> ejecutarLlamada(bloque: suspend () -> T): Result<T> =
     } catch (cancelacion: CancellationException) {
         throw cancelacion
     } catch (e: ClientRequestException) {
-        Result.failure(ErrorApiException(traducirCliente(e)))
+        when (e.response.status.value) {
+            401 -> {
+                val esLogin = e.response.call.request.url.toString().contains("auth/login")
+                val ex = if (esLogin) CredencialesInvalidasException() else SesionExpiradaException()
+                Result.failure(ex)
+            }
+            403 -> Result.failure(SinPermisoException())
+            else -> Result.failure(ErrorApiException(traducirCliente(e)))
+        }
     } catch (e: ServerResponseException) {
         Result.failure(ErrorApiException(ErrorApi.Servidor))
     } catch (e: HttpRequestTimeoutException) {

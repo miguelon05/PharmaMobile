@@ -46,11 +46,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material3.CircularProgressIndicator
+import pe.edu.upeu.pharmamobil.domain.model.Sesion
 import pe.edu.upeu.pharmamobil.navigation.Screen
+import pe.edu.upeu.pharmamobil.presentation.auth.EstadoSesion
+import pe.edu.upeu.pharmamobil.presentation.auth.LoginScreen
+import pe.edu.upeu.pharmamobil.presentation.auth.SessionManager
 import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteScreen
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
 import pe.edu.upeu.pharmamobil.presentation.inicio.InicioScreen
@@ -84,6 +91,10 @@ private val ScreenSaver = Saver<Screen, Int>(
 @Composable
 fun App() = KoinContext {
 
+    val sessionManager: SessionManager = koinViewModel()
+    val estadoSesion by sessionManager.estadoSesion.collectAsStateWithLifecycle()
+    val notificacionError by sessionManager.mensajeNotificacion.collectAsStateWithLifecycle()
+
     var pantallaActual by rememberSaveable(stateSaver = ScreenSaver) {
         mutableStateOf<Screen>(Screen.Inicio)
     }
@@ -101,133 +112,112 @@ fun App() = KoinContext {
     PharmaMobilTheme(
         darkTheme = darkTheme
     ) {
-
-        ModalNavigationDrawer(
-
-            drawerState = drawerState,
-
-            drawerContent = {
-
-                ModalDrawerSheet {
-
-                    DrawerHeader()
-
-                    HorizontalDivider()
-
-                    Spacer(
-                        modifier = Modifier.height(12.dp)
-                    )
-
-                    DESTINOS.forEach { destino ->
-
-                        NavigationDrawerItem(
-                            label = {
-                                Text(destino.titulo)
-                            },
-                            selected = pantallaActual == destino.screen,
-                            onClick = {
-
-                                pantallaActual = destino.screen
-
-                                scope.launch {
-                                    drawerState.close()
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = destino.icono,
-                                    contentDescription = null
-                                )
-                            },
-                            modifier = Modifier.padding(
-                                NavigationDrawerItemDefaults.ItemPadding
-                            )
-                        )
+        when (val sesionActual = estadoSesion) {
+            EstadoSesion.Cargando -> {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            CircularProgressIndicator()
+                            Text("Verificando sesión…", style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
-
-                    Spacer(
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    HorizontalDivider()
-
-                    ModoOscuro(
-                        activo = darkTheme,
-                        onCambiar = { darkTheme = it }
-                    )
                 }
             }
-        ) {
 
-            Scaffold(
+            EstadoSesion.NoAutenticado -> {
+                LoginScreen(
+                    viewModel = koinViewModel(),
+                    notificacionError = notificacionError,
+                    onLoginExitoso = { sessionManager.onSesionIniciada(it) }
+                )
+            }
 
-                topBar = {
+            is EstadoSesion.Autenticado -> {
+                val sesion = sesionActual.sesion
 
-                    TopAppBar(
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet {
+                            DrawerHeader(sesion = sesion)
 
-                        title = {
-                            Text(
-                                text = tituloDe(pantallaActual)
-                            )
-                        },
+                            HorizontalDivider()
 
-                        navigationIcon = {
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                            IconButton(
-                                onClick = {
-
-                                    scope.launch {
-
-                                        drawerState.open()
-                                    }
-                                }
-                            ) {
-
-                                Icon(
-                                    imageVector = Icons.Default.Menu,
-                                    contentDescription = "Abrir menú"
+                            DESTINOS.forEach { destino ->
+                                NavigationDrawerItem(
+                                    label = { Text(destino.titulo) },
+                                    selected = pantallaActual == destino.screen,
+                                    onClick = {
+                                        pantallaActual = destino.screen
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    icon = {
+                                        Icon(imageVector = destino.icono, contentDescription = null)
+                                    },
+                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                                 )
                             }
-                        },
 
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                }
+                            Spacer(modifier = Modifier.weight(1f))
 
-            ) { paddingValues ->
+                            HorizontalDivider()
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
+                            NavigationDrawerItem(
+                                label = { Text("Cerrar sesión") },
+                                selected = false,
+                                onClick = {
+                                    scope.launch { drawerState.close() }
+                                    sessionManager.cerrarSesion()
+                                },
+                                icon = {
+                                    Icon(imageVector = Icons.Default.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                                },
+                                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                            )
+
+                            ModoOscuro(
+                                activo = darkTheme,
+                                onCambiar = { darkTheme = it }
+                            )
+                        }
+                    }
                 ) {
-
-                    when (pantallaActual) {
-
-                        Screen.Inicio ->
-                            InicioScreen()
-
-                        Screen.Productos ->
-                            ProductoScreen(
-                                viewModel = koinViewModel()
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = { Text(text = tituloDe(pantallaActual)) },
+                                navigationIcon = {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(imageVector = Icons.Default.Menu, contentDescription = "Abrir menú")
+                                    }
+                                },
+                                colors = TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
                             )
-
-                        Screen.Clientes ->
-                            ClienteScreen(
-                                viewModel = koinViewModel()
-                            )
-
-                        Screen.Pedidos ->
-                            EstadoVacio(
-                                icono = Icons.Default.ShoppingCart,
-                                titulo = "Pedidos en construcción",
-                                descripcion = "Este módulo llega en una próxima sesión del curso.",
-                                modifier = Modifier.align(Alignment.Center)
-                            )
+                        }
+                    ) { paddingValues ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues)
+                        ) {
+                            when (pantallaActual) {
+                                Screen.Inicio -> InicioScreen()
+                                Screen.Productos -> ProductoScreen(viewModel = koinViewModel(), sesion = sesion)
+                                Screen.Clientes -> ClienteScreen(viewModel = koinViewModel())
+                                Screen.Pedidos -> EstadoVacio(
+                                    icono = Icons.Default.ShoppingCart,
+                                    titulo = "Pedidos en construcción",
+                                    descripcion = "Este módulo llega en una próxima sesión del curso.",
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -237,8 +227,9 @@ fun App() = KoinContext {
 
 
 @Composable
-private fun DrawerHeader() {
-
+private fun DrawerHeader(
+    sesion: Sesion? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -246,13 +237,11 @@ private fun DrawerHeader() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ) {
-
             Icon(
                 imageVector = Icons.Default.LocalPharmacy,
                 contentDescription = null,
@@ -263,15 +252,14 @@ private fun DrawerHeader() {
         }
 
         Column {
-
             Text(
-                text = "PharmaMobil",
-                style = MaterialTheme.typography.titleLarge
+                text = sesion?.nombreCompleto ?: "PharmaMobil",
+                style = MaterialTheme.typography.titleMedium
             )
 
             Text(
-                text = "Gestión farmacéutica",
-                style = MaterialTheme.typography.bodyMedium,
+                text = if (sesion != null) "@${sesion.usuario}" else "Gestión farmacéutica",
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

@@ -8,7 +8,9 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 import pe.edu.upeu.pharmamobil.data.remote.ApiConfig
+import pe.edu.upeu.pharmamobil.domain.platform.AlmacenSeguro
 import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
+import pe.edu.upeu.pharmamobil.platform.AlmacenSeguroAndroid
 import pe.edu.upeu.pharmamobil.platform.CompartidorAndroid
 
 actual val platformModule: Module = module {
@@ -20,4 +22,5 @@ actual val platformModule: Module = module {
         )
     }
     single<Compartidor> { CompartidorAndroid(androidContext()) }
+    single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
 }

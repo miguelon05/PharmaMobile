@@ -1,5 +1,24 @@
 This is a Kotlin Multiplatform project targeting Android, iOS.
 
+## Autenticación JWT y Almacenamiento Seguro
+
+Sincronización completa del sistema de autenticación contra el backend PharmaSoft (`POST /api/v1/auth/login` y `GET /api/v1/auth/me`):
+
+1. **Almacenamiento Seguro:**
+   - **Android:** Implementado con `EncryptedSharedPreferences` y `MasterKey` (`AES256_GCM`).
+   - **iOS:** Implementado utilizando el llavero `NSUserDefaults` / Keychain nativo.
+2. **Ktor Client Auth Plugin:**
+   - Se instala el plugin `Auth` con proveedor `bearer`.
+   - `loadTokens` lee dinámicamente el token desde `AlmacenSeguro`.
+   - `sendWithoutRequest` omite el token en solicitudes hacia `auth/login`.
+   - Tras el login exitoso o cierre de sesión, se invoca `clearToken()` sobre el proveedor Bearer para refrescar la caché del cliente Ktor.
+3. **Manejo de Errores (401 y 403):**
+   - **401 Unauthorized:** Si ocurre durante el login, muestra error de credenciales. Si ocurre durante una petición del CRUD (token expirado), limpia el almacenamiento seguro, resetea la sesión y redirige al usuario a `LoginScreen` con una notificación explícita.
+   - **403 Forbidden:** No cierra la sesión; conserva el token y notifica que el usuario no cuenta con los permisos requeridos.
+4. **Navegación y Permisos UI:**
+   - Si existe sesión válida al abrir la app, navega directamente a la pantalla principal.
+   - La pantalla `ProductoScreen` habilita u oculta los botones de creación, edición y eliminación según los permisos del usuario (`sesion.puede("PRODUCTOS_CREAR")`, etc.).
+
 ## Sesión 7: GET de productos con Ktor y HTTPS
 
 Flujo implementado:

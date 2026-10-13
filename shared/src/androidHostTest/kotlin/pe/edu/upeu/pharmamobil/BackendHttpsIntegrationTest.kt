@@ -32,7 +32,12 @@ class BackendHttpsIntegrationTest {
         val manager = factory.trustManagers.filterIsInstance<X509TrustManager>().single()
         val ssl = SSLContext.getInstance("TLS").apply { init(null, arrayOf(manager), null) }
         val engine = OkHttp.create { config { sslSocketFactory(ssl.socketFactory, manager) } }
-        val client = crearHttpClient(engine, ApiConfig("https://localhost:8443/api/v1/", loggingEnabled = true))
+        val dummyAlmacen = object : pe.edu.upeu.pharmamobil.domain.platform.AlmacenSeguro {
+            override fun guardarToken(token: String) {}
+            override fun leerToken(): String? = null
+            override fun borrarToken() {}
+        }
+        val client = crearHttpClient(engine, ApiConfig("https://localhost:8443/api/v1/", loggingEnabled = true), dummyAlmacen)
         try {
             val page = ProductoApi(client).listar(0)
             assertTrue(page.totalElementos >= 0)

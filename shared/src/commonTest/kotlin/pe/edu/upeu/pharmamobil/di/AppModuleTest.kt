@@ -10,7 +10,6 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import pe.edu.upeu.pharmamobil.data.repository.ClienteRepositorioEnMemoria
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
-import pe.edu.upeu.pharmamobil.data.remote.ApiConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -25,6 +24,10 @@ import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
+import pe.edu.upeu.pharmamobil.domain.platform.AlmacenSeguro
+import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
+import pe.edu.upeu.pharmamobil.data.remote.ApiConfig
+import org.koin.dsl.module
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -65,6 +68,18 @@ class AppModuleTest {
                     )
                 }
             } onClose { it?.close() }
+            single<Compartidor> { 
+                object : Compartidor { 
+                    override fun compartir(texto: String) {} 
+                } 
+            }
+            single<AlmacenSeguro> {
+                object : AlmacenSeguro {
+                    override fun guardarToken(token: String) {}
+                    override fun leerToken(): String? = null
+                    override fun borrarToken() {}
+                }
+            }
         })
     }.koin
 

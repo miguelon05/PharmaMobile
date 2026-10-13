@@ -25,10 +25,18 @@ import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoUiState
 
+import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoApiTest {
     private val config = ApiConfig("https://prueba.invalid/api/v1/")
     private val headers = headersOf("Content-Type", "application/json")
+    private val dummyCompartidor = object : Compartidor { override fun compartir(texto: String) {} }
+    private val dummyAlmacen = object : pe.edu.upeu.pharmamobil.domain.platform.AlmacenSeguro {
+        override fun guardarToken(token: String) {}
+        override fun leerToken(): String? = null
+        override fun borrarToken() {}
+    }
 
     @Test
     fun get200RespetaRutaYPaginacionYEntregaDatosAlViewModel() = runTest {
@@ -42,7 +50,7 @@ class ProductoApiTest {
             assertEquals(llamadas++, page)
             respond("""{"contenido":[{"id":${page + 1},"nombre":"Producto de prueba","precio":12.50,"stock":5,"estado":true,"fechaModificacion":null}],"pagina":$page,"tamanio":20,"totalElementos":2,"totalPaginas":2,"ultima":${page == 1}}""", headers = headers)
         }
-        val client = crearHttpClient(engine, config)
+        val client = crearHttpClient(engine, config, dummyAlmacen)
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             val repo = ProductoRepositorioRest(ProductoApi(client), 1L)
@@ -50,7 +58,8 @@ class ProductoApiTest {
                 RegistrarProductoUseCase(repo), 
                 ListarProductosUseCase(repo),
                 ActualizarProductoUseCase(repo),
-                EliminarProductoUseCase(repo)
+                EliminarProductoUseCase(repo),
+                dummyCompartidor
             )
             assertIs<ProductoUiState.Fase.Cargando>(vm.uiState.value.fase)
             advanceUntilIdle()
@@ -70,7 +79,7 @@ class ProductoApiTest {
         )
         for ((status, body, expected) in cases) {
             val engine = MockEngine { respond(body, status, headers) }
-            val client = crearHttpClient(engine, config)
+            val client = crearHttpClient(engine, config, dummyAlmacen)
             try {
                 val result = ListarProductosUseCase(ProductoRepositorioRest(ProductoApi(client), 1L))()
                 assertTrue(result.isFailure)
@@ -95,7 +104,7 @@ class ProductoApiTest {
             respond("""{"contenido":[],"pagina":0,"tamanio":20,"totalElementos":0,"totalPaginas":0,"ultima":true}""", headers = headers)
         }
 
-        val client = crearHttpClient(engine, config)
+        val client = crearHttpClient(engine, config, dummyAlmacen)
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             val repo = ProductoRepositorioRest(ProductoApi(client), 1L)
@@ -103,7 +112,8 @@ class ProductoApiTest {
                 RegistrarProductoUseCase(repo), 
                 ListarProductosUseCase(repo),
                 ActualizarProductoUseCase(repo),
-                EliminarProductoUseCase(repo)
+                EliminarProductoUseCase(repo),
+                dummyCompartidor
             )
             advanceUntilIdle()
             vm.uiState.first { it.fase !is ProductoUiState.Fase.Cargando }
@@ -119,7 +129,7 @@ class ProductoApiTest {
     @Test
     fun cancelacionNoSeConvierteEnErrorDeRed() = runTest {
         val engine = MockEngine { throw CancellationException("Cancelado") }
-        val client = crearHttpClient(engine, config)
+        val client = crearHttpClient(engine, config, dummyAlmacen)
         try {
             assertFailsWith<CancellationException> {
                 ListarProductosUseCase(ProductoRepositorioRest(ProductoApi(client), 1L))()

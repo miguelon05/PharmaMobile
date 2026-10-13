@@ -21,10 +21,16 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 
 /** Reto 02: transiciones observables y ausencia de efectos ante datos invalidos. */
+import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoFlujoTest {
+
+    private val dummyCompartidor = object : Compartidor { override fun compartir(texto: String) {} }
+
     private class RepositorioControlado(
         var productos: List<Producto> = emptyList(),
+
         val fallo: Throwable? = null
     ) : ProductoRepository {
         var registros = 0
@@ -52,7 +58,8 @@ class ProductoFlujoTest {
         RegistrarProductoUseCase(repo), 
         ListarProductosUseCase(repo),
         ActualizarProductoUseCase(repo),
-        EliminarProductoUseCase(repo)
+        EliminarProductoUseCase(repo),
+        dummyCompartidor
     )
 
     @Test

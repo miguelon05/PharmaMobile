@@ -30,6 +30,7 @@ class ProductoViewModel(
     private val _uiState = MutableStateFlow(ProductoUiState())
     val uiState: StateFlow<ProductoUiState> = _uiState.asStateFlow()
     private var carga: Job? = null
+    private var productosOriginales: Map<Long, Producto> = emptyMap()
 
     init {
         cargarProductos()
@@ -44,6 +45,7 @@ class ProductoViewModel(
 
             val fase = listarProductos().fold(
                 onSuccess = { productos ->
+                    productosOriginales = productos.associateBy(Producto::id)
                     if (productos.isEmpty()) {
                         ProductoUiState.Fase.SinProductos
                     } else {
@@ -111,13 +113,9 @@ class ProductoViewModel(
     }
 
     fun compartir(producto: ProductoUi) {
-        val prodDomain = Producto(
-            id = producto.id,
-            nombre = producto.nombre,
-            precio = producto.precio.replace("S/ ", "").toDoubleOrNull() ?: 0.0,
-            stock = producto.stock.replace(" u.", "").toIntOrNull() ?: 0
-        )
-        compartidor.compartir(prodDomain.comoTextoParaCompartir())
+        productosOriginales[producto.id]?.let { productoOriginal ->
+            compartidor.compartir(productoOriginal.comoTextoParaCompartir())
+        }
     }
 
     fun registrar() {

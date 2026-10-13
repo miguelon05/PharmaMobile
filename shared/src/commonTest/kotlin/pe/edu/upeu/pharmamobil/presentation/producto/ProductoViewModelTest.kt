@@ -20,8 +20,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
+import pe.edu.upeu.pharmamobil.domain.platform.Compartidor
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoViewModelTest {
+
+    private val dummyCompartidor = object : Compartidor { override fun compartir(texto: String) {} }
 
     @AfterTest
     fun restaurarMain() {
@@ -34,8 +38,10 @@ class ProductoViewModelTest {
         registrarProducto = RegistrarProductoUseCase(repositorio),
         listarProductos = ListarProductosUseCase(repositorio),
         actualizarProductoUseCase = ActualizarProductoUseCase(repositorio),
-        eliminarProductoUseCase = EliminarProductoUseCase(repositorio)
+        eliminarProductoUseCase = EliminarProductoUseCase(repositorio),
+        compartidor = dummyCompartidor
     )
+
 
     @Test
     fun cargaExitosa() = runTest {

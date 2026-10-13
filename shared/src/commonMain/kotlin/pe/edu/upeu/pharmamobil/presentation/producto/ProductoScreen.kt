@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pe.edu.upeu.pharmamobil.domain.model.Sesion
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
 import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
 import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
@@ -44,10 +45,15 @@ import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
 @Composable
 fun ProductoScreen(
     viewModel: ProductoViewModel,
+    sesion: Sesion? = null,
     modifier: Modifier = Modifier
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val puedeCrear = sesion == null || sesion.puede("PRODUCTOS_CREAR") || sesion.puede("CATALOGO_ESCRIBIR")
+    val puedeEditar = sesion == null || sesion.puede("PRODUCTOS_EDITAR") || sesion.puede("CATALOGO_ESCRIBIR")
+    val puedeEliminar = sesion == null || sesion.puede("PRODUCTOS_ELIMINAR") || sesion.puede("CATALOGO_ESCRIBIR")
 
     Column(
         modifier = modifier
@@ -64,15 +70,17 @@ fun ProductoScreen(
             ) { Text("Actualizar") }
         }
 
-        FormularioProductoCard(
-            formulario = uiState.formulario,
-            operacion = uiState.operacion,
-            onNombreChange = viewModel::onNombreChange,
-            onPrecioChange = viewModel::onPrecioChange,
-            onStockChange = viewModel::onStockChange,
-            onRegistrar = viewModel::registrar,
-            onCancelar = viewModel::cancelarEdicion
-        )
+        if (puedeCrear || (puedeEditar && uiState.formulario.id != null)) {
+            FormularioProductoCard(
+                formulario = uiState.formulario,
+                operacion = uiState.operacion,
+                onNombreChange = viewModel::onNombreChange,
+                onPrecioChange = viewModel::onPrecioChange,
+                onStockChange = viewModel::onStockChange,
+                onRegistrar = viewModel::registrar,
+                onCancelar = viewModel::cancelarEdicion
+            )
+        }
 
         uiState.mensajeExito?.let {
             MensajeExito(it)
@@ -133,6 +141,8 @@ fun ProductoScreen(
                             ProductoItem(
                                 producto = producto,
                                 operacion = uiState.operacion,
+                                puedeEditar = puedeEditar,
+                                puedeEliminar = puedeEliminar,
                                 onEdit = { viewModel.seleccionarProductoParaEditar(producto) },
                                 onDelete = { viewModel.eliminar(producto.id) },
                                 onCompartir = { viewModel.compartir(producto) }
@@ -282,6 +292,8 @@ private fun EncabezadoInventario(
 private fun ProductoItem(
     producto: ProductoUi,
     operacion: ProductoUiState.Operacion,
+    puedeEditar: Boolean = true,
+    puedeEliminar: Boolean = true,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onCompartir: () -> Unit
@@ -359,12 +371,16 @@ private fun ProductoItem(
             }
 
             Row {
-                IconButton(onClick = onEdit, enabled = !inactivo) {
-                    Icon(Icons.Default.Edit, contentDescription = "Editar")
+                if (puedeEditar) {
+                    IconButton(onClick = onEdit, enabled = !inactivo) {
+                        Icon(Icons.Default.Edit, contentDescription = "Editar")
+                    }
                 }
-                IconButton(onClick = onDelete, enabled = !inactivo) {
-                    if (enEliminacion) CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    else Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                if (puedeEliminar) {
+                    IconButton(onClick = onDelete, enabled = !inactivo) {
+                        if (enEliminacion) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        else Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }

@@ -44,6 +44,7 @@ kotlin {
         androidMain.dependencies {
             implementation(project.dependencies.enforcedPlatform(libs.okhttp.bom))
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.security.crypto)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             // api: MainApplication (androidApp) usa androidContext() al arrancar Koin.
@@ -51,6 +52,7 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.auth)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
