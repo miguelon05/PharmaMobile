@@ -60,13 +60,16 @@ class LoginViewModel(
 
         viewModelScope.launch {
             _uiState.update { it.copy(cargando = true, errorGeneral = null) }
+            println("LoginViewModel: Enviando credenciales para $u...")
 
             loginUseCase(Credenciales(usuario = u, clave = c)).fold(
                 onSuccess = { sesion ->
+                    println("LoginViewModel: Login exitoso para $u")
                     _uiState.update { it.copy(cargando = false) }
                     onExito(sesion)
                 },
                 onFailure = { fallo ->
+                    println("LoginViewModel: Error en login: ${fallo.message}")
                     val msg = when (fallo) {
                         is CredencialesInvalidasException -> "Usuario o contraseña incorrectos"
                         is ErrorApiException -> "Error de servidor (${fallo.message})"

@@ -42,7 +42,10 @@ fun crearHttpClient(
                 }
             }
             sendWithoutRequest { request ->
-                !request.url.buildString().contains("auth/login")
+                val token = almacenSeguro.leerToken()
+                val isLogin = request.url.pathSegments.contains("login") ||
+                        request.url.toString().contains("auth/login")
+                !token.isNullOrBlank() && !isLogin
             }
         }
     }
