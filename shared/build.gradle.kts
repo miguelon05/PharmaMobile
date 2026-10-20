@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
+    alias(libs.plugins.sqldelight)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.androidMultiplatformLibrary)
@@ -19,7 +20,7 @@ kotlin {
         }
     }
     
-    android {
+    androidLibrary {
        namespace = "pe.edu.upeu.pharmamobil.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
@@ -42,6 +43,7 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
+            implementation(libs.sqldelight.android)
             implementation(project.dependencies.enforcedPlatform(libs.okhttp.bom))
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.security.crypto)
@@ -51,6 +53,8 @@ kotlin {
             api(libs.koin.android)
         }
         commonMain.dependencies {
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.auth)
             implementation(libs.ktor.client.content.negotiation)
@@ -71,13 +75,24 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
         iosMain.dependencies {
+            implementation(libs.sqldelight.native)
             implementation(libs.ktor.client.darwin)
+            implementation(libs.multiplatform.settings)
         }
         commonTest.dependencies {
             implementation(libs.ktor.client.mock)
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
+        getByName("androidHostTest").dependencies {
+            implementation(libs.sqldelight.jvm)
+        }
+    }
+}
+
+sqldelight {
+    databases {
+        create("PharmaDb") { packageName.set("pe.edu.upeu.pharmamobil.db") }
     }
 }
 

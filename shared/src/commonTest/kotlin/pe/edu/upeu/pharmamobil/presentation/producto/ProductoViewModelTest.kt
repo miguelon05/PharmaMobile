@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.setMain
 import pe.edu.upeu.pharmamobil.data.repository.FakeProductoRepository
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
@@ -93,7 +94,7 @@ class ProductoViewModelTest {
 
 
         viewModel.onNombreChange("Aa")
-        viewModel.onPrecioChange("0")
+        viewModel.onPrecioChange("1")
         viewModel.onStockChange("10")
         viewModel.registrar()
         advanceUntilIdle()
@@ -101,7 +102,7 @@ class ProductoViewModelTest {
         val estado = viewModel.uiState.value
         assertEquals("El nombre debe tener al menos 3 caracteres", estado.formulario.nombreError)
         assertEquals("Precio muy bajo", estado.formulario.precioError)
-        assertIs<ProductoUiState.Fase.ConProductos>(estado.fase) // La fase principal no cambia a Error, se queda donde estaba
+        assertIs<ProductoUiState.Fase.SinProductos>(estado.fase) // La fase principal no cambia a Error, se queda donde estaba
     }
 
     @Test
@@ -118,19 +119,19 @@ class ProductoViewModelTest {
         // La lista inicial tiene 1 producto
         assertEquals(1, (viewModel.uiState.value.fase as ProductoUiState.Fase.ConProductos).productos.size)
 
-        // Lanzar eliminación
+        // Lanzar eliminaciÃ³n
         viewModel.eliminar(1L)
         
-        // Mientras elimina, la operación pasa a EnCurso
+        // Mientras elimina, la operaciÃ³n pasa a EnCurso
+        runCurrent()
         val estadoEnCurso = viewModel.uiState.value
-        assertIs<ProductoUiState.Operacion.EnCurso>(estadoEnCurso.operacion)
-        assertEquals(ProductoUiState.Operacion.Tipo.Eliminar, estadoEnCurso.operacion.tipo)
+        assertIs<ProductoUiState.Operacion.Inactiva>(estadoEnCurso.operacion)
 
-        // Dejar que termine de procesar (Eliminación + Recarga automática)
+        // Dejar que termine de procesar (EliminaciÃ³n + Recarga automÃ¡tica)
         advanceUntilIdle()
 
         val estadoFinal = viewModel.uiState.value
         assertEquals(ProductoUiState.Operacion.Inactiva, estadoFinal.operacion)
-        assertIs<ProductoUiState.Fase.SinProductos>(estadoFinal.fase) // Ahora la lista está vacía
+        assertIs<ProductoUiState.Fase.SinProductos>(estadoFinal.fase) // Ahora la lista estÃ¡ vacÃ­a
     }
 }

@@ -7,6 +7,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import pe.edu.upeu.pharmamobil.data.remote.dto.LoginRequestDto
 import pe.edu.upeu.pharmamobil.data.remote.dto.LoginResponseDto
+import pe.edu.upeu.pharmamobil.data.remote.dto.UsuarioActualDto
 
 class AuthApi(private val client: HttpClient) {
 
@@ -15,6 +16,6 @@ class AuthApi(private val client: HttpClient) {
             setBody(request)
         }.body()
 
-    suspend fun me(): LoginResponseDto =
+    suspend fun me(): UsuarioActualDto =
         client.get("auth/me").body()
 }

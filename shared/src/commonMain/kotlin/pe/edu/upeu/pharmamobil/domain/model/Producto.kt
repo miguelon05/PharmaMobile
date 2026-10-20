@@ -4,7 +4,9 @@ data class Producto(
     val id:Long,
     val nombre:String,
     val precio:Double,
-    val stock: Int
+    val stock: Int,
+    val categoriaId: Long? = null,
+    val pendiente: Boolean = false
 ) {
 
 

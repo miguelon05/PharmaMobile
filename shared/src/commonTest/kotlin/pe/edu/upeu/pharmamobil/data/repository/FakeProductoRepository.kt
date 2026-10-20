@@ -10,12 +10,16 @@ class FakeProductoRepository(
     var fallaAlRegistrar: Throwable? = null
     var fallaAlListar: Throwable? = null
 
+    private val cambios = kotlinx.coroutines.flow.MutableStateFlow(productos.toList())
+    override fun observar() = cambios
+    override suspend fun sincronizar() { cambios.value = listar() }
     private var siguienteId = 1L
 
     override suspend fun registrar(producto: Producto): Producto {
         fallaAlRegistrar?.let { throw it }
         val guardado = producto.copy(id = siguienteId++)
         productos.add(guardado)
+        cambios.value = productos.toList()
         return guardado
     }
 
@@ -32,6 +36,7 @@ class FakeProductoRepository(
         val index = productos.indexOfFirst { it.id == producto.id }
         if (index >= 0) {
             productos[index] = producto
+            cambios.value = productos.toList()
             return producto
         }
         throw IllegalArgumentException("Producto no encontrado")
@@ -39,5 +44,6 @@ class FakeProductoRepository(
 
     override suspend fun eliminar(id: Long) {
         productos.removeAll { it.id == id }
+        cambios.value = productos.toList()
     }
 }

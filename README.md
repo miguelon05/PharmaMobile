@@ -6,7 +6,7 @@ Sincronización completa del sistema de autenticación contra el backend PharmaS
 
 1. **Almacenamiento Seguro:**
    - **Android:** Implementado con `EncryptedSharedPreferences` y `MasterKey` (`AES256_GCM`).
-   - **iOS:** Implementado utilizando el llavero `NSUserDefaults` / Keychain nativo.
+   - **iOS:** Implementado con `KeychainSettings` (Keychain de Apple), nunca `NSUserDefaults`.
 2. **Ktor Client Auth Plugin:**
    - Se instala el plugin `Auth` con proveedor `bearer`.
    - `loadTokens` lee dinámicamente el token desde `AlmacenSeguro`.
@@ -14,10 +14,20 @@ Sincronización completa del sistema de autenticación contra el backend PharmaS
    - Tras el login exitoso o cierre de sesión, se invoca `clearToken()` sobre el proveedor Bearer para refrescar la caché del cliente Ktor.
 3. **Manejo de Errores (401 y 403):**
    - **401 Unauthorized:** Si ocurre durante el login, muestra error de credenciales. Si ocurre durante una petición del CRUD (token expirado), limpia el almacenamiento seguro, resetea la sesión y redirige al usuario a `LoginScreen` con una notificación explícita.
-   - **403 Forbidden:** No cierra la sesión; conserva el token y notifica que el usuario no cuenta con los permisos requeridos.
+   - **403 Forbidden:** No cierra la sesión; conserva el token y muestra el mensaje de falta de permisos en la operación.
 4. **Navegación y Permisos UI:**
    - Si existe sesión válida al abrir la app, navega directamente a la pantalla principal.
-   - La pantalla `ProductoScreen` habilita u oculta los botones de creación, edición y eliminación según los permisos del usuario (`sesion.puede("PRODUCTOS_CREAR")`, etc.).
+   - El menú filtra Clientes con `CLIENTES_LEER` y Productos con `CATALOGO_LEER` o `CATALOGO_ESCRIBIR`. Las acciones de catálogo se habilitan con `CATALOGO_ESCRIBIR`; los permisos se leen de la respuesta del backend.
+
+### Comprobación de autenticación
+
+- `POST /api/v1/auth/login` envía `username` y `password`; el token recibido se guarda en almacenamiento seguro.
+- `GET /api/v1/auth/me` valida una sesión restaurada y aporta el usuario y permisos. El token conservado localmente no se espera en esa respuesta.
+- El plugin Bearer de Ktor agrega el token a las solicitudes protegidas y omite el endpoint de login. Los encabezados se registran solo en builds debug y `Authorization`/`Cookie` están censurados.
+- Un `401` en una llamada protegida limpia la sesión y devuelve al login con aviso. Un `403` conserva la sesión.
+- Usuarios de guía para la verificación manual: `admin` / `Admin123`, `vendedor` / `Vendedor123` y `almacen` / `Almacen123`.
+
+La validación visual de inicio de sesión y permisos debe realizarse en un emulador conectado al backend; no se declara como evidencia una sesión que no se haya ejecutado.
 
 ## Sesión 7: GET de productos con Ktor y HTTPS
 

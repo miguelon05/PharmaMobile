@@ -8,10 +8,16 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.dsl.onClose
 import pe.edu.upeu.pharmamobil.data.remote.AuthApi
+import pe.edu.upeu.pharmamobil.data.remote.CategoriaApi
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.crearHttpClient
 import pe.edu.upeu.pharmamobil.data.repository.AuthRepositorioRest
 import pe.edu.upeu.pharmamobil.data.repository.ClienteRepositorioEnMemoria
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.data.local.ProductoLocal
+import pe.edu.upeu.pharmamobil.db.PharmaDb
+import app.cash.sqldelight.db.SqlDriver
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
 import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
 import pe.edu.upeu.pharmamobil.domain.repository.AuthRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
@@ -35,8 +41,12 @@ const val CATEGORIA_POR_DEFECTO = 1L
 val dataModule = module {
     single<HttpClient> { crearHttpClient(get(), get(), get()) } onClose { it?.close() }
     single { ProductoApi(get()) }
+    single { CategoriaApi(get()) }
     single { AuthApi(get()) }
-    single<ProductoRepository> { ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO) }
+    single<SqlDriver> { get<CreadorDeDriver>().crear() } onClose { it?.close() }
+    single { PharmaDb(get<SqlDriver>()) }
+    single { ProductoLocal(get()) }
+    single<ProductoRepository> { ProductoRepositorioOffline(get(), ProductoRepositorioRest(get(), CATEGORIA_POR_DEFECTO, get<CategoriaApi>())) }
     single<ClienteRepository> { ClienteRepositorioEnMemoria() }
     single<AuthRepository> { AuthRepositorioRest(get(), get(), get()) }
 }

@@ -36,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,14 +69,15 @@ import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
 private data class Destino(
     val screen: Screen,
     val titulo: String,
-    val icono: ImageVector
+    val icono: ImageVector,
+    val permisos: Set<String> = emptySet()
 )
 
 private val DESTINOS = listOf(
     Destino(Screen.Inicio, "Inicio", Icons.Default.Home),
-    Destino(Screen.Productos, "Productos", Icons.Default.Medication),
-    Destino(Screen.Clientes, "Clientes", Icons.Default.Person),
-    Destino(Screen.Pedidos, "Pedidos", Icons.Default.ShoppingCart)
+    Destino(Screen.Productos, "Productos", Icons.Default.Medication, setOf("CATALOGO_LEER", "CATALOGO_ESCRIBIR")),
+    Destino(Screen.Clientes, "Clientes", Icons.Default.Person, setOf("CLIENTES_LEER")),
+    Destino(Screen.Pedidos, "Pedidos", Icons.Default.ShoppingCart, setOf("VENTAS_LEER", "VENTAS_ESCRIBIR"))
 )
 
 
@@ -134,6 +136,14 @@ fun App() = KoinContext {
 
             is EstadoSesion.Autenticado -> {
                 val sesion = sesionActual.sesion
+                val destinosVisibles = DESTINOS.filter { destino ->
+                    destino.permisos.isEmpty() || destino.permisos.any(sesion::puede)
+                }
+                LaunchedEffect(sesion, pantallaActual) {
+                    if (destinosVisibles.none { it.screen == pantallaActual }) {
+                        pantallaActual = Screen.Inicio
+                    }
+                }
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -145,7 +155,7 @@ fun App() = KoinContext {
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            DESTINOS.forEach { destino ->
+                            destinosVisibles.forEach { destino ->
                                 NavigationDrawerItem(
                                     label = { Text(destino.titulo) },
                                     selected = pantallaActual == destino.screen,

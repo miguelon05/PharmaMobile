@@ -1,5 +1,6 @@
 package pe.edu.upeu.pharmamobil.domain.model
 
+@kotlinx.serialization.Serializable
 data class Sesion(
     val token: String,
     val usuario: String,

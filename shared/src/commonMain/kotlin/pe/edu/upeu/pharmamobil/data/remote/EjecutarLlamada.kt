@@ -11,6 +11,7 @@ import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.error.SesionExpiradaException
 import pe.edu.upeu.pharmamobil.domain.error.SinPermisoException
+import pe.edu.upeu.pharmamobil.domain.session.SessionExpirationEvents
 import kotlin.coroutines.cancellation.CancellationException
 
 suspend fun <T> ejecutarLlamada(bloque: suspend () -> T): Result<T> =
@@ -22,6 +23,7 @@ suspend fun <T> ejecutarLlamada(bloque: suspend () -> T): Result<T> =
         when (e.response.status.value) {
             401 -> {
                 val esLogin = e.response.call.request.url.toString().contains("auth/login")
+                if (!esLogin) SessionExpirationEvents.notifyExpired()
                 val ex = if (esLogin) CredencialesInvalidasException() else SesionExpiradaException()
                 Result.failure(ex)
             }
@@ -32,8 +34,12 @@ suspend fun <T> ejecutarLlamada(bloque: suspend () -> T): Result<T> =
         Result.failure(ErrorApiException(ErrorApi.Servidor))
     } catch (e: HttpRequestTimeoutException) {
         Result.failure(ErrorApiException(ErrorApi.TiempoAgotado))
+    } catch (e: io.ktor.serialization.JsonConvertException) {
+        Result.failure(IllegalStateException("La respuesta del servidor no tiene el formato esperado", e))
     } catch (e: IOException) {
         Result.failure(ErrorApiException(ErrorApi.SinConexion))
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
 private suspend fun traducirCliente(e: ClientRequestException): ErrorApi {

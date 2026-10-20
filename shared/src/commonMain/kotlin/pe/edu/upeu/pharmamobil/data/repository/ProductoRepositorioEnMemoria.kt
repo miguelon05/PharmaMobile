@@ -10,6 +10,9 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
 
     private val candado = Mutex()
     private val productos = mutableListOf<Producto>()
+    private val cambios = kotlinx.coroutines.flow.MutableStateFlow(productos.toList())
+    override fun observar() = cambios
+    override suspend fun sincronizar() { cambios.value = listar() }
     private var siguienteId = 1L
 
     override suspend fun registrar(producto: Producto): Producto {
@@ -17,6 +20,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         return candado.withLock {
             val guardado = producto.copy(id = siguienteId++)
             productos.add(guardado)
+        cambios.value = productos.toList()
             guardado
         }
     }
@@ -39,6 +43,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
             val index = productos.indexOfFirst { it.id == producto.id }
             if (index >= 0) {
                 productos[index] = producto
+            cambios.value = productos.toList()
                 producto
             } else {
                 throw IllegalArgumentException("No encontrado")
@@ -49,6 +54,7 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
     override suspend fun eliminar(id: Long) {
         candado.withLock {
             productos.removeAll { it.id == id }
+        cambios.value = productos.toList()
         }
     }
 

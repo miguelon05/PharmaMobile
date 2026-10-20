@@ -21,6 +21,10 @@ class AlmacenSeguroAndroid(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
+    override fun guardarSesion(sesion: String) { prefs.edit().putString("sesion", sesion).apply() }
+    override fun leerSesion(): String? = prefs.getString("sesion", null)
+    override fun borrarSesion() { prefs.edit().remove("sesion").apply() }
+
     override fun guardarToken(token: String) {
         prefs.edit().putString(KEY_TOKEN, token).apply()
     }

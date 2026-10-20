@@ -2,14 +2,16 @@ package pe.edu.upeu.pharmamobil.di
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import pe.edu.upeu.pharmamobil.data.repository.ClienteRepositorioEnMemoria
-import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioRest
+import pe.edu.upeu.pharmamobil.data.repository.ProductoRepositorioOffline
+import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
+import pe.edu.upeu.pharmamobil.data.local.driverDePrueba
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -48,7 +50,7 @@ class AppModuleTest {
 
     @BeforeTest
     fun instalarMain() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(StandardTestDispatcher())
     }
 
     @AfterTest
@@ -59,6 +61,7 @@ class AppModuleTest {
 
     private fun grafoCompleto(): Koin = startKoin {
         modules(dataModule, domainModule, presentationModule, module {
+            single<CreadorDeDriver> { object : CreadorDeDriver { override fun crear() = driverDePrueba() } }
             single { ApiConfig("https://prueba.invalid/api/v1/") }
             single<HttpClientEngine> {
                 MockEngine {
@@ -88,7 +91,7 @@ class AppModuleTest {
 
         val koin = grafoCompleto()
 
-        assertIs<ProductoRepositorioRest>(koin.get<ProductoRepository>())
+        assertIs<ProductoRepositorioOffline>(koin.get<ProductoRepository>())
         assertIs<ClienteRepositorioEnMemoria>(koin.get<ClienteRepository>())
     }
 

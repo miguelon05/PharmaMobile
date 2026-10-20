@@ -33,35 +33,35 @@ class ProductoViewModel(
     private var productosOriginales: Map<Long, Producto> = emptyMap()
 
     init {
-        cargarProductos()
+        viewModelScope.launch {
+            listarProductos.observar().collect { productos ->
+                productosOriginales = productos.associateBy(Producto::id)
+                _uiState.update { it.copy(
+                    fase = if (productos.isEmpty()) ProductoUiState.Fase.SinProductos
+                           else ProductoUiState.Fase.ConProductos(productos.map { p -> p.aUi() }),
+                    pendientes = productos.count { p -> p.pendiente }
+                ) }
+            }
+        }
+        sincronizar()
     }
 
-    fun cargarProductos() {
-        carga?.cancel()
+    fun cargarProductos() = sincronizar()
+
+    fun sincronizar() {
+        if (carga?.isActive == true) return
         carga = viewModelScope.launch {
-            _uiState.update {
-                it.copy(fase = ProductoUiState.Fase.Cargando)
-            }
-
-            val fase = listarProductos().fold(
-                onSuccess = { productos ->
-                    productosOriginales = productos.associateBy(Producto::id)
-                    if (productos.isEmpty()) {
-                        ProductoUiState.Fase.SinProductos
-                    } else {
-                        ProductoUiState.Fase.ConProductos(productos.map { it.aUi() })
+            _uiState.update { it.copy(sincronizando = true) }
+            val resultado = listarProductos.sincronizar()
+            _uiState.update { it.copy(
+                sincronizando = false,
+                avisoRed = resultado.exceptionOrNull()?.let { fallo ->
+                    when ((fallo as? ErrorApiException)?.error) {
+                        ErrorApi.SinConexion, ErrorApi.TiempoAgotado -> "Sin conexión: mostrando datos guardados"
+                        else -> "No se pudo sincronizar. Los cambios locales siguen guardados."
                     }
-                },
-                onFailure = { fallo ->
-                    ProductoUiState.Fase.Error(
-                        fallo.message ?: "No se pudo cargar el inventario"
-                    )
                 }
-            )
-
-            _uiState.update {
-                it.copy(fase = fase)
-            }
+            ) }
         }
     }
 
@@ -77,7 +77,7 @@ class ProductoViewModel(
     fun onPrecioChange(precio: String) {
         _uiState.update {
             it.copy(
-                formulario = it.formulario.copy(precio = precio, precioError = null),
+                formulario = it.formulario.copy(precio = precio.replace(',', '.'), precioError = null),
                 mensajeExito = null
             )
         }
@@ -98,8 +98,8 @@ class ProductoViewModel(
                 formulario = FormularioProducto(
                     id = producto.id,
                     nombre = producto.nombre,
-                    precio = producto.precio.toString(),
-                    stock = producto.stock.toString()
+                    precio = productosOriginales[producto.id]?.precio?.toString().orEmpty(),
+                    stock = productosOriginales[producto.id]?.stock?.toString().orEmpty()
                 ),
                 mensajeExito = null
             )
@@ -135,7 +135,8 @@ class ProductoViewModel(
                     id = formulario.id!!,
                     nombre = formulario.nombre,
                     precio = formulario.precio,
-                    stock = formulario.stock
+                    stock = formulario.stock,
+                    categoriaId = productosOriginales[formulario.id!!]?.categoriaId
                 )
             } else {
                 registrarProducto(
@@ -146,7 +147,7 @@ class ProductoViewModel(
             }
 
             resultado.onSuccess { producto ->
-                cargarProductos()
+                sincronizar()
                 _uiState.update {
                     it.copy(
                         operacion = ProductoUiState.Operacion.Inactiva,
@@ -163,7 +164,7 @@ class ProductoViewModel(
             _uiState.update { it.copy(operacion = ProductoUiState.Operacion.EnCurso(ProductoUiState.Operacion.Tipo.Eliminar)) }
             eliminarProductoUseCase(id)
                 .onSuccess {
-                    cargarProductos()
+                    sincronizar()
                     _uiState.update {
                         it.copy(operacion = ProductoUiState.Operacion.Inactiva, mensajeExito = "Producto eliminado")
                     }
@@ -190,15 +191,25 @@ class ProductoViewModel(
         }
 
         when (error) {
-            is ErrorApi.Validacion -> _uiState.update {
-                it.copy(
-                    operacion = ProductoUiState.Operacion.Inactiva,
-                    formulario = it.formulario.copy(
-                        nombreError = error.porCampo["nombre"],
-                        precioError = error.porCampo["precio"],
-                        stockError = error.porCampo["stock"]
+            is ErrorApi.Validacion -> {
+                val nombreError = error.porCampo["nombre"]
+                val precioError = error.porCampo["precio"]
+                val stockError = error.porCampo["stock"]
+                val otrosErrores = error.porCampo
+                    .filterKeys { it !in setOf("nombre", "precio", "stock") }
+                    .values
+                    .joinToString("\n")
+                _uiState.update {
+                    it.copy(
+                        operacion = if (otrosErrores.isBlank()) ProductoUiState.Operacion.Inactiva
+                            else ProductoUiState.Operacion.Fallida(otrosErrores),
+                        formulario = it.formulario.copy(
+                            nombreError = nombreError,
+                            precioError = precioError,
+                            stockError = stockError
+                        )
                     )
-                )
+                }
             }
             else -> _uiState.update {
                 it.copy(operacion = ProductoUiState.Operacion.Fallida(mensajeDe(fallo, error)))

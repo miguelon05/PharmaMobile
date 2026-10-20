@@ -45,7 +45,7 @@ class RegistrarProductoUseCase(
                 Producto(
                     id = 0L,
                     nombre = nombre.trim(),
-                    precio = precio.toDouble(),
+                    precio = precio.normalizarPrecio().toDouble(),
                     stock = stock.toInt()
                 )
             )
@@ -58,7 +58,7 @@ class RegistrarProductoUseCase(
     }
 
     private fun validarPrecio(precio: String): String? {
-        val precioValor = precio.toDoubleOrNull()
+        val precioValor = precio.normalizarPrecio().toDoubleOrNull()
         return when {
             precio.isBlank() -> "El precio es obligatorio"
             precioValor == null || !precioValor.isFinite() -> "El precio debe ser un número válido"
@@ -66,6 +66,8 @@ class RegistrarProductoUseCase(
             else -> null
         }
     }
+
+    private fun String.normalizarPrecio(): String = trim().replace(',', '.')
 
     private fun validarStock(stock: String): String? {
         val stockValor = stock.toIntOrNull()

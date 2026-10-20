@@ -11,7 +11,8 @@ class ActualizarProductoUseCase(
         id: Long,
         nombre: String,
         precio: String,
-        stock: String
+        stock: String,
+        categoriaId: Long? = null
     ): Result<Producto> {
 
         val errores = ErroresDeProducto(
@@ -29,8 +30,9 @@ class ActualizarProductoUseCase(
                 Producto(
                     id = id,
                     nombre = nombre.trim(),
-                    precio = precio.toDouble(),
-                    stock = stock.toInt()
+                    precio = precio.normalizarPrecio().toDouble(),
+                    stock = stock.toInt(),
+                    categoriaId = categoriaId
                 )
             )
         }
@@ -41,7 +43,7 @@ class ActualizarProductoUseCase(
     }
 
     private fun validarPrecio(precio: String): String? {
-        val precioValor = precio.toDoubleOrNull()
+        val precioValor = precio.normalizarPrecio().toDoubleOrNull()
         return when {
             precio.isBlank() -> "El precio es obligatorio"
             precioValor == null || !precioValor.isFinite() -> "El precio debe ser un número válido"
@@ -49,6 +51,8 @@ class ActualizarProductoUseCase(
             else -> null
         }
     }
+
+    private fun String.normalizarPrecio(): String = trim().replace(',', '.')
 
     private fun validarStock(stock: String): String? {
         val stockValor = stock.toIntOrNull()

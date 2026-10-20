@@ -51,9 +51,15 @@ fun ProductoScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val puedeCrear = sesion == null || sesion.puede("PRODUCTOS_CREAR") || sesion.puede("CATALOGO_ESCRIBIR")
-    val puedeEditar = sesion == null || sesion.puede("PRODUCTOS_EDITAR") || sesion.puede("CATALOGO_ESCRIBIR")
-    val puedeEliminar = sesion == null || sesion.puede("PRODUCTOS_ELIMINAR") || sesion.puede("CATALOGO_ESCRIBIR")
+    val puedeCrear = sesion?.let {
+        it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_CREAR")
+    } == true
+    val puedeEditar = sesion?.let {
+        it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_EDITAR")
+    } == true
+    val puedeEliminar = sesion?.let {
+        it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_ELIMINAR")
+    } == true
 
     Column(
         modifier = modifier
@@ -66,9 +72,12 @@ fun ProductoScreen(
             Text("Productos", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
             FilledTonalButton(
                 onClick = viewModel::cargarProductos,
-                enabled = uiState.fase != ProductoUiState.Fase.Cargando
-            ) { Text("Actualizar") }
+                enabled = !uiState.sincronizando
+            ) { Text(if (uiState.sincronizando) "Sincronizando…" else "Sincronizar") }
         }
+
+        uiState.avisoRed?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        if (uiState.pendientes > 0) Text("${uiState.pendientes} producto(s) pendientes de sincronizar")
 
         if (puedeCrear || (puedeEditar && uiState.formulario.id != null)) {
             FormularioProductoCard(
@@ -342,6 +351,9 @@ private fun ProductoItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
+                if (producto.pendiente) {
+                    Text("Pendiente de sincronizar", style = MaterialTheme.typography.labelSmall)
+                }
                 Button(
                     onClick = onCompartir,
                     enabled = !inactivo,

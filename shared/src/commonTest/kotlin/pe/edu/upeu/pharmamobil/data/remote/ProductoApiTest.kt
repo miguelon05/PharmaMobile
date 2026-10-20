@@ -63,9 +63,9 @@ class ProductoApiTest {
             )
             assertIs<ProductoUiState.Fase.Cargando>(vm.uiState.value.fase)
             advanceUntilIdle()
-            vm.uiState.first { it.fase !is ProductoUiState.Fase.Cargando }
+            vm.uiState.first { !it.sincronizando && it.fase !is ProductoUiState.Fase.Cargando }
             val success = assertIs<ProductoUiState.Fase.ConProductos>(vm.uiState.value.fase)
-            assertEquals(listOf(1L), success.productos.map { it.id })
+            assertEquals(listOf(1L, 2L), success.productos.map { it.id })
             assertEquals(2, llamadas)
         } finally { client.close(); engine.close(); Dispatchers.resetMain() }
     }
@@ -116,12 +116,13 @@ class ProductoApiTest {
                 dummyCompartidor
             )
             advanceUntilIdle()
-            vm.uiState.first { it.fase !is ProductoUiState.Fase.Cargando }
-            assertIs<ProductoUiState.Fase.Error>(vm.uiState.value.fase)
+            vm.uiState.first { !it.sincronizando && it.fase !is ProductoUiState.Fase.Cargando }
+            assertIs<ProductoUiState.Fase.SinProductos>(vm.uiState.value.fase)
+            assertNotNull(vm.uiState.value.avisoRed)
             online = true
             vm.cargarProductos()
             advanceUntilIdle()
-            vm.uiState.first { it.fase !is ProductoUiState.Fase.Cargando }
+            vm.uiState.first { !it.sincronizando && it.fase !is ProductoUiState.Fase.Cargando }
             assertIs<ProductoUiState.Fase.SinProductos>(vm.uiState.value.fase)
         } finally { client.close(); engine.close(); Dispatchers.resetMain() }
     }

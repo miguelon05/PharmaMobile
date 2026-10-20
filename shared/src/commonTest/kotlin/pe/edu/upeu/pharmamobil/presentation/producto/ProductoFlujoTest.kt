@@ -33,6 +33,9 @@ class ProductoFlujoTest {
 
         val fallo: Throwable? = null
     ) : ProductoRepository {
+        private val cambios = kotlinx.coroutines.flow.MutableStateFlow(productos)
+        override fun observar() = cambios
+        override suspend fun sincronizar() { cambios.value = listar() }
         var registros = 0
         var listados = 0
 
@@ -100,8 +103,8 @@ class ProductoFlujoTest {
             val vm = crear(RepositorioControlado(fallo = IllegalStateException("Sin conexión")))
             assertEquals(ProductoUiState.Fase.Cargando, vm.uiState.value.fase)
             advanceUntilIdle()
-            val fase = assertIs<ProductoUiState.Fase.Error>(vm.uiState.value.fase)
-            assertEquals("Sin conexión", fase.mensaje)
+            assertIs<ProductoUiState.Fase.SinProductos>(vm.uiState.value.fase)
+            kotlin.test.assertNotNull(vm.uiState.value.avisoRed)
         } finally { Dispatchers.resetMain() }
     }
 

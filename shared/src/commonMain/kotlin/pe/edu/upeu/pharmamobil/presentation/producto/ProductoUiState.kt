@@ -4,7 +4,10 @@ data class ProductoUiState(
     val fase: Fase = Fase.Cargando,
     val formulario: FormularioProducto = FormularioProducto(),
     val operacion: Operacion = Operacion.Inactiva,
-    val mensajeExito: String? = null
+    val mensajeExito: String? = null,
+    val sincronizando: Boolean = false,
+    val avisoRed: String? = null,
+    val pendientes: Int = 0
 ) {
     sealed interface Fase {
         data object Cargando : Fase

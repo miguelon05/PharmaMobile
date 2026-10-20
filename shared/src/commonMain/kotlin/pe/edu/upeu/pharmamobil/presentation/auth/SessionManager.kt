@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobil.domain.model.Sesion
+import pe.edu.upeu.pharmamobil.domain.session.SessionExpirationEvents
 import pe.edu.upeu.pharmamobil.domain.usecase.CerrarSesionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerSesionUseCase
 
@@ -28,6 +30,11 @@ class SessionManager(
     val mensajeNotificacion: StateFlow<String?> = _mensajeNotificacion.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            SessionExpirationEvents.events.collect {
+                expirarSesion()
+            }
+        }
         verificarSesionInicial()
     }
 

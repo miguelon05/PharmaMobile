@@ -8,7 +8,8 @@ fun ProductoResponseDto.toDomain(): Producto = Producto(
     id = id,
     nombre = nombre,
     precio = precio,
-    stock = stock
+    stock = stock,
+    categoriaId = categoriaId
 )
 
 fun Producto.toRequest(categoriaPorDefecto: Long): ProductoRequestDto = ProductoRequestDto(
@@ -16,6 +17,6 @@ fun Producto.toRequest(categoriaPorDefecto: Long): ProductoRequestDto = Producto
     precio = precio,
     stock = stock,
     estado = true,
-    categoriaId = categoriaPorDefecto
+    categoriaId = categoriaId ?: categoriaPorDefecto
 )
 
