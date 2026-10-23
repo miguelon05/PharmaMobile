@@ -19,12 +19,14 @@ class PersistenciaEnDiscoTest {
                 val local = ProductoLocal(PharmaDb(driver))
                 local.reemplazarSincronizados(listOf(Producto(10, "Paracetamol", 3.0, 5)))
                 local.guardar(Producto(0, "Ibuprofeno", 4.5, 20), nuevo = true)
+                local.registrarSincronizacion(1_700_000_000_000L)
             }
             JdbcSqliteDriver(url).use { driver ->
                 val local = ProductoLocal(PharmaDb(driver))
                 assertEquals(2, local.listar().size)
                 assertEquals(1, local.pendientes().size)
                 assertTrue(local.pendientes().single().id < 0)
+                assertEquals(1_700_000_000_000L, local.ultimaSincronizacion())
             }
         } finally { Files.deleteIfExists(archivo) }
     }

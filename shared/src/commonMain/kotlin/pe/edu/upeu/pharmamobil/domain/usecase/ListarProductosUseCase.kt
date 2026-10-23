@@ -9,6 +9,7 @@ class ListarProductosUseCase(
 ) {
 
     fun observar() = productoRepository.observar()
+    fun observarUltimaSincronizacion() = productoRepository.observarUltimaSincronizacion()
     suspend fun sincronizar() = ejecutarLlamada { productoRepository.sincronizar() }
 
     suspend operator fun invoke(): Result<List<Producto>> = ejecutarLlamada {

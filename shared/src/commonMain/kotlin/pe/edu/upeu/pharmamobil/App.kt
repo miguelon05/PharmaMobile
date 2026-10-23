@@ -127,17 +127,39 @@ fun App() = KoinContext {
             }
 
             EstadoSesion.NoAutenticado -> {
-                LoginScreen(
-                    viewModel = koinViewModel(),
-                    notificacionError = notificacionError,
-                    onLoginExitoso = { sessionManager.onSesionIniciada(it) }
-                )
+                var mostrarLogin by rememberSaveable { mutableStateOf(notificacionError != null) }
+                if (mostrarLogin) {
+                    LoginScreen(
+                        viewModel = koinViewModel(),
+                        notificacionError = notificacionError,
+                        onLoginExitoso = { sessionManager.onSesionIniciada(it) }
+                    )
+                } else {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text("PharmaMobil", style = MaterialTheme.typography.headlineLarge)
+                            Spacer(Modifier.height(24.dp))
+                            Text("Sin sesión local", style = MaterialTheme.typography.titleLarge)
+                            Spacer(Modifier.height(12.dp))
+                            Text("Todavía no hay productos disponibles para consultar en esta sesión. Si es tu primera apertura sin red, conéctate e inicia sesión para descargar el catálogo.")
+                            Spacer(Modifier.height(12.dp))
+                            Text("Sin sincronización en esta sesión")
+                            Spacer(Modifier.height(24.dp))
+                            androidx.compose.material3.Button(onClick = { mostrarLogin = true }) { Text("Iniciar sesión") }
+                        }
+                    }
+                }
             }
 
             is EstadoSesion.Autenticado -> {
                 val sesion = sesionActual.sesion
                 val destinosVisibles = DESTINOS.filter { destino ->
-                    destino.permisos.isEmpty() || destino.permisos.any(sesion::puede)
+                    (destino.permisos.isEmpty() || destino.permisos.any(sesion::puede)) &&
+                        (!sesion.soloLecturaOffline || destino.screen == Screen.Inicio || destino.screen == Screen.Productos)
                 }
                 LaunchedEffect(sesion, pantallaActual) {
                     if (destinosVisibles.none { it.screen == pantallaActual }) {

@@ -12,8 +12,13 @@ import pe.edu.upeu.pharmamobil.domain.error.ErrorApiException
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-class ProductoRepositorioOffline(private val local: ProductoLocal, private val remoto: ProductoRepository) : ProductoRepository {
+class ProductoRepositorioOffline(
+    private val local: ProductoLocal,
+    private val remoto: ProductoRepository,
+    private val ahora: () -> Long = { kotlin.time.Clock.System.now().toEpochMilliseconds() }
+) : ProductoRepository {
     private val mutex = Mutex()
+    override fun observarUltimaSincronizacion() = local.observarUltimaSincronizacion()
     override fun observar() = local.observar()
     override suspend fun listar() = withContext(Dispatchers.Default) { local.listar() }
     override suspend fun obtener(id: Long) = withContext(Dispatchers.Default) { local.obtener(id) }
@@ -44,6 +49,7 @@ class ProductoRepositorioOffline(private val local: ProductoLocal, private val r
                 local.confirmar(fila.id, resultado)
             }
             local.reemplazarSincronizados(ejecutarLlamada { remoto.listar() }.getOrThrow())
+            local.registrarSincronizacion(ahora())
         }
     }
 }

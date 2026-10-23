@@ -43,10 +43,10 @@ class AuthOfflineTest {
             assertNull(repo.obtenerSesionGuardada())
         } finally { client.close() }
     }
-    @Test fun sesionExpiradaNoPermiteEntrarSinRed() = runTest {
+    @Test fun sesionExpiradaPermiteSoloLecturaLocalSinRed() = runTest {
         val almacen = almacen(1)
         val client = crearHttpClient(MockEngine { throw io.ktor.utils.io.errors.IOException("Sin red") }, ApiConfig("https://prueba.invalid/api/v1/"), almacen)
-        try { assertNull(AuthRepositorioRest(AuthApi(client), almacen, client).obtenerSesionGuardada()) }
+        try { assertTrue(AuthRepositorioRest(AuthApi(client), almacen, client).obtenerSesionGuardada()!!.soloLecturaOffline) }
         finally { client.close() }
     }
     @Test fun rechazoDelServidorNoUsaSesionCacheada() = runTest {

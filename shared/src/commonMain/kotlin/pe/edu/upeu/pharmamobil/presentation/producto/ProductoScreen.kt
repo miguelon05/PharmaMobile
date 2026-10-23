@@ -50,15 +50,21 @@ fun ProductoScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val ahora by androidx.compose.runtime.produceState(kotlin.time.Clock.System.now().toEpochMilliseconds()) {
+        while (true) {
+            value = kotlin.time.Clock.System.now().toEpochMilliseconds()
+            kotlinx.coroutines.delay(60_000)
+        }
+    }
 
     val puedeCrear = sesion?.let {
-        it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_CREAR")
+        !it.soloLecturaOffline && (it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_CREAR"))
     } == true
     val puedeEditar = sesion?.let {
-        it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_EDITAR")
+        !it.soloLecturaOffline && (it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_EDITAR"))
     } == true
     val puedeEliminar = sesion?.let {
-        it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_ELIMINAR")
+        !it.soloLecturaOffline && (it.puede("CATALOGO_ESCRIBIR") || it.puede("PRODUCTOS_ELIMINAR"))
     } == true
 
     Column(
@@ -76,6 +82,8 @@ fun ProductoScreen(
             ) { Text(if (uiState.sincronizando) "Sincronizando…" else "Sincronizar") }
         }
 
+        Text(antiguedadDatos(uiState.ultimaSincronizacion, ahora), style = MaterialTheme.typography.bodyMedium)
+        if (sesion?.soloLecturaOffline == true) Text("Sesión vencida: consulta local de solo lectura. Al reconectar, inicia sesión nuevamente.")
         uiState.avisoRed?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         if (uiState.pendientes > 0) Text("${uiState.pendientes} producto(s) pendientes de sincronizar")
 

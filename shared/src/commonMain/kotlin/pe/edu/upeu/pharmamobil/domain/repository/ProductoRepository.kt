@@ -3,6 +3,7 @@ package pe.edu.upeu.pharmamobil.domain.repository
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 
 interface ProductoRepository {
+    fun observarUltimaSincronizacion(): kotlinx.coroutines.flow.Flow<Long?> = kotlinx.coroutines.flow.flowOf(null)
     fun observar(): kotlinx.coroutines.flow.Flow<List<Producto>>
     suspend fun sincronizar()
 

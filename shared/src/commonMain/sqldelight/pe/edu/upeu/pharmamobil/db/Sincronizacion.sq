@@ -1,0 +1,10 @@
+CREATE TABLE sincronizacion (
+ id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+ instante INTEGER NOT NULL
+);
+
+ultima:
+SELECT instante FROM sincronizacion WHERE id = 1;
+
+guardar:
+INSERT OR REPLACE INTO sincronizacion(id, instante) VALUES (1, ?);

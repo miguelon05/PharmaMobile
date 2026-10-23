@@ -34,6 +34,11 @@ class ProductoViewModel(
 
     init {
         viewModelScope.launch {
+            listarProductos.observarUltimaSincronizacion().collect { instante ->
+                _uiState.update { it.copy(ultimaSincronizacion = instante) }
+            }
+        }
+        viewModelScope.launch {
             listarProductos.observar().collect { productos ->
                 productosOriginales = productos.associateBy(Producto::id)
                 _uiState.update { it.copy(

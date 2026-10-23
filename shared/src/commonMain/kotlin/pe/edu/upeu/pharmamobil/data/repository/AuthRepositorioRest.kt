@@ -58,7 +58,7 @@ class AuthRepositorioRest(
             if (tipo == ErrorApi.SinConexion || tipo == ErrorApi.TiempoAgotado || tipo == ErrorApi.Servidor) {
                 almacenSeguro.leerSesion()?.let { guardada ->
                     runCatching { Json.decodeFromString<Sesion>(guardada) }.getOrNull()
-                }?.takeIf { it.token == token && tokenVigente(token) }
+                }?.takeIf { it.token == token }?.let { it.copy(soloLecturaOffline = !tokenVigente(token)) }
             } else null
         }
     }

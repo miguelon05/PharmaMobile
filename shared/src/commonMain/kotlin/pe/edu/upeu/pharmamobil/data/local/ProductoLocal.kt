@@ -10,6 +10,10 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 
 class ProductoLocal(base: PharmaDb, private val dispatcher: CoroutineDispatcher = Dispatchers.Default) {
     private val q = base.productoQueries
+    private val sincronizacion = base.sincronizacionQueries
+    fun observarUltimaSincronizacion() = sincronizacion.ultima().asFlow().mapToList(dispatcher).map { it.firstOrNull() }
+    fun ultimaSincronizacion(): Long? = sincronizacion.ultima().executeAsOneOrNull()
+    fun registrarSincronizacion(instante: Long) { sincronizacion.guardar(instante) }
     fun observar() = q.listarTodos().asFlow().mapToList(dispatcher).map { filas -> filas.map { it.aDominio() } }
     fun listar() = q.listarTodos().executeAsList().map { it.aDominio() }
     fun pendientes() = q.listarPendientes().executeAsList()
