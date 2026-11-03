@@ -8,9 +8,11 @@ class ListarProductosUseCase(
     private val productoRepository: ProductoRepository
 ) {
 
+    fun observarEstadoSincronizacion() = productoRepository.observarEstadoSincronizacion()
+    suspend fun reintentar(id: Long) = productoRepository.reintentar(id)
     fun observar() = productoRepository.observar()
     fun observarUltimaSincronizacion() = productoRepository.observarUltimaSincronizacion()
-    suspend fun sincronizar() = ejecutarLlamada { productoRepository.sincronizar() }
+    suspend fun sincronizar() = ejecutarLlamada { SincronizarUseCase(productoRepository)() }
 
     suspend operator fun invoke(): Result<List<Producto>> = ejecutarLlamada {
         productoRepository.listar()
