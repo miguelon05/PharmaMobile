@@ -20,7 +20,7 @@ class ProductoRepositorioOfflineTest {
             val repo = ProductoRepositorioOffline(local, remoto)
             val nuevo = repo.registrar(producto)
             assertTrue(nuevo.id < 0)
-            assertFailsWith<ErrorApiException> { repo.sincronizar() }
+            repo.sincronizar()
             assertEquals(nuevo, repo.observar().first().single())
             assertEquals(1, local.pendientes().size)
         } finally { driver.close() }

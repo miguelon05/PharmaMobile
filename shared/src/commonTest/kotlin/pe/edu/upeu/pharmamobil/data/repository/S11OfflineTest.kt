@@ -88,6 +88,7 @@ class S11OfflineTest {
             val creado = e.repo.registrar(nuevo)
             assertFailsWith<ErrorApiException> { e.repo.sincronizar() }
             e.conectado = true
+            e.repo.reintentar(creado.id)
             e.repo.sincronizar()
             assertEquals(1, e.envios)
             assertTrue(e.local.pendientes().isEmpty())
