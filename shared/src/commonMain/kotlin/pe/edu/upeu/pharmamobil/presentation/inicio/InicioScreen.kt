@@ -15,6 +15,11 @@ import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -62,6 +67,20 @@ fun InicioScreen() {
             titulo = "Revisar pedidos",
             descripcion = "Disponible en una próxima sesión del curso."
         )
+
+        Button(
+            onClick = {
+                throw RuntimeException("Crash de prueba para Firebase Crashlytics")
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.BugReport, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Simular Crash (Firebase Crashlytics)")
+        }
     }
 }
 

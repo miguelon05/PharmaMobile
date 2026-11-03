@@ -3,6 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    id("com.google.gms.google-services") version "4.4.4"
+    id("com.google.firebase.crashlytics") version "3.0.6"
 }
 
 kotlin {

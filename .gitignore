@@ -19,3 +19,6 @@ captures
 node_modules/
 .local/
 __pycache__/
+
+# Configuracion local de Firebase Android
+/androidApp/google-services.json

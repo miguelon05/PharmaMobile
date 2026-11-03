@@ -43,6 +43,7 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
             implementation(libs.sqldelight.android)
             implementation(project.dependencies.enforcedPlatform(libs.okhttp.bom))
             implementation(libs.ktor.client.okhttp)
@@ -53,6 +54,8 @@ kotlin {
             api(libs.koin.android)
         }
         commonMain.dependencies {
+            implementation("dev.gitlive:firebase-crashlytics:2.7.0")
+            implementation("dev.gitlive:firebase-messaging:2.7.0")
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
             implementation(libs.ktor.client.core)

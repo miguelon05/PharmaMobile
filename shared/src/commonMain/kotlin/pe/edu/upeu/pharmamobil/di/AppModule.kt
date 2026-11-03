@@ -39,6 +39,8 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 const val CATEGORIA_POR_DEFECTO = 1L
 
 val dataModule = module {
+    single<pe.edu.upeu.pharmamobil.domain.port.Telemetria> { pe.edu.upeu.pharmamobil.data.firebase.TelemetriaFirebase() }
+
     single<HttpClient> { crearHttpClient(get(), get(), get()) } onClose { it?.close() }
     single { ProductoApi(get()) }
     single { CategoriaApi(get()) }
@@ -52,6 +54,7 @@ val dataModule = module {
 }
 
 val domainModule = module {
+    factory { pe.edu.upeu.pharmamobil.domain.usecase.SincronizarUseCase(get()) }
     factory { RegistrarProductoUseCase(get()) }
     factory { ListarProductosUseCase(get()) }
     factory { ActualizarProductoUseCase(get()) }
@@ -66,7 +69,7 @@ val domainModule = module {
 val presentationModule = module {
     viewModel { SessionManager(get(), get()) }
     viewModel { LoginViewModel(get()) }
-    viewModel { ProductoViewModel(get(), get(), get(), get(), get()) }
+    viewModel { ProductoViewModel(get(), get(), get(), get(), get(), get(), getOrNull(), getOrNull()) }
     viewModel { ClienteViewModel(get(), get()) }
 }
 
