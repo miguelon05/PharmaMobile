@@ -16,6 +16,11 @@ import pe.edu.upeu.pharmamobil.platform.AlmacenSeguroAndroid
 import pe.edu.upeu.pharmamobil.platform.CompartidorAndroid
 
 actual val platformModule: Module = module {
+    single<pe.edu.upeu.pharmamobil.domain.platform.Conectividad> { pe.edu.upeu.pharmamobil.data.permiso.ConectividadAndroid(androidContext()) }
+    single<pe.edu.upeu.pharmamobil.domain.platform.AvisosSincronizacion> { pe.edu.upeu.pharmamobil.data.permiso.AvisosSincronizacionAndroid(androidContext()) }
+    single { pe.edu.upeu.pharmamobil.data.permiso.GestorPermisosAndroid(androidContext()) }
+    single<pe.edu.upeu.pharmamobil.domain.permiso.GestorPermisos> { get<pe.edu.upeu.pharmamobil.data.permiso.GestorPermisosAndroid>() }
+
     single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
     single<HttpClientEngine> { OkHttp.create() } onClose { it?.close() }
     single {
