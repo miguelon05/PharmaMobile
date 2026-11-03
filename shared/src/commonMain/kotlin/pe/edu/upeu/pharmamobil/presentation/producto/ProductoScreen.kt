@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -82,10 +83,24 @@ fun ProductoScreen(
             ) { Text(if (uiState.sincronizando) "Sincronizando…" else "Sincronizar") }
         }
 
+        uiState.conectado?.let { Text(if (it) "Con red · ${uiState.pendientes} cambio(s) por enviar" else "Sin conexión · ${uiState.pendientes} cambio(s) por enviar") }
         Text(antiguedadDatos(uiState.ultimaSincronizacion, ahora), style = MaterialTheme.typography.bodyMedium)
         if (sesion?.soloLecturaOffline == true) Text("Sesión vencida: consulta local de solo lectura. Al reconectar, inicia sesión nuevamente.")
         uiState.avisoRed?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         if (uiState.pendientes > 0) Text("${uiState.pendientes} producto(s) pendientes de sincronizar")
+
+        if (uiState.fallidas.isNotEmpty()) {
+            Text("${uiState.fallidas.size} cambio(s) con fallo", color = MaterialTheme.colorScheme.error)
+            androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxWidth().height(160.dp)) {
+                items(uiState.fallidas, key = { it.id }) { fila ->
+                    Text("${fila.nombre}: ${fila.motivo}")
+                    OutlinedButton(onClick = { viewModel.reintentar(fila.id) }, enabled = !uiState.sincronizando) {
+                        Text("Ya revisé el error: reintentar")
+                    }
+                }
+            }
+        }
+        pe.edu.upeu.pharmamobil.presentation.permiso.PermisoNotificaciones()
 
         if (puedeCrear || (puedeEditar && uiState.formulario.id != null)) {
             FormularioProductoCard(

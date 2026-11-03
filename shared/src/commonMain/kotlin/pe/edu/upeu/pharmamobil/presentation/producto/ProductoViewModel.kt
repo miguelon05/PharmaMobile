@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import pe.edu.upeu.pharmamobil.domain.error.ErrorApi
@@ -24,7 +25,10 @@ class ProductoViewModel(
     private val listarProductos: ListarProductosUseCase,
     private val actualizarProductoUseCase: ActualizarProductoUseCase,
     private val eliminarProductoUseCase: EliminarProductoUseCase,
-    private val compartidor: Compartidor
+    private val compartidor: Compartidor,
+    private val telemetria: pe.edu.upeu.pharmamobil.domain.port.Telemetria? = null,
+    private val conectividad: pe.edu.upeu.pharmamobil.domain.platform.Conectividad? = null,
+    private val avisos: pe.edu.upeu.pharmamobil.domain.platform.AvisosSincronizacion? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductoUiState())
@@ -33,6 +37,19 @@ class ProductoViewModel(
     private var productosOriginales: Map<Long, Producto> = emptyMap()
 
     init {
+        conectividad?.let { monitor ->
+            viewModelScope.launch {
+                monitor.observar().collect { conectado ->
+                    _uiState.update { it.copy(conectado = conectado) }
+                    if (conectado) sincronizar()
+                }
+            }
+        }
+        viewModelScope.launch {
+            listarProductos.observarEstadoSincronizacion().collect { estado ->
+                _uiState.update { it.copy(pendientes = estado.pendientes, fallidas = estado.fallidas) }
+            }
+        }
         viewModelScope.launch {
             listarProductos.observarUltimaSincronizacion().collect { instante ->
                 _uiState.update { it.copy(ultimaSincronizacion = instante) }
@@ -43,12 +60,15 @@ class ProductoViewModel(
                 productosOriginales = productos.associateBy(Producto::id)
                 _uiState.update { it.copy(
                     fase = if (productos.isEmpty()) ProductoUiState.Fase.SinProductos
-                           else ProductoUiState.Fase.ConProductos(productos.map { p -> p.aUi() }),
-                    pendientes = productos.count { p -> p.pendiente }
+                           else ProductoUiState.Fase.ConProductos(productos.map { p -> p.aUi() })
                 ) }
             }
         }
         sincronizar()
+    }
+
+    fun reintentar(id: Long) {
+        viewModelScope.launch { listarProductos.reintentar(id); sincronizar() }
     }
 
     fun cargarProductos() = sincronizar()
@@ -57,7 +77,14 @@ class ProductoViewModel(
         if (carga?.isActive == true) return
         carga = viewModelScope.launch {
             _uiState.update { it.copy(sincronizando = true) }
+            val habiaPendientes = _uiState.value.pendientes > 0
             val resultado = listarProductos.sincronizar()
+            if (resultado.isSuccess && habiaPendientes) {
+                val estadoEnvio = listarProductos.observarEstadoSincronizacion().first()
+                if (estadoEnvio.pendientes == 0 && estadoEnvio.fallidas.isEmpty()) avisos?.completada()
+            }
+            resultado.onFailure { telemetria?.registrarError(it, mapOf("pantalla" to "productos", "operacion" to "sincronizar")) }
+            resultado.onSuccess { telemetria?.registrarEvento("sincronizacion_completada") }
             _uiState.update { it.copy(
                 sincronizando = false,
                 avisoRed = resultado.exceptionOrNull()?.let { fallo ->

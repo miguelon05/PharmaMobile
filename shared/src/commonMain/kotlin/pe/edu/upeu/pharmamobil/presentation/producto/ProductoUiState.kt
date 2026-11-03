@@ -8,7 +8,9 @@ data class ProductoUiState(
     val sincronizando: Boolean = false,
     val avisoRed: String? = null,
     val ultimaSincronizacion: Long? = null,
-    val pendientes: Int = 0
+    val conectado: Boolean? = null,
+    val pendientes: Int = 0,
+    val fallidas: List<pe.edu.upeu.pharmamobil.domain.model.FilaFallida> = emptyList()
 ) {
     sealed interface Fase {
         data object Cargando : Fase
