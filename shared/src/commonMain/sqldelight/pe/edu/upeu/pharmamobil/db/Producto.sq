@@ -5,7 +5,10 @@ CREATE TABLE producto (
  stock INTEGER NOT NULL,
  categoriaId INTEGER,
  pendiente INTEGER NOT NULL DEFAULT 0,
- eliminado INTEGER NOT NULL DEFAULT 0
+ eliminado INTEGER NOT NULL DEFAULT 0,
+ intentos INTEGER NOT NULL DEFAULT 0,
+ ultimoError TEXT,
+ proximoIntento INTEGER NOT NULL DEFAULT 0
 );
 listarTodos:
 SELECT * FROM producto WHERE eliminado = 0 ORDER BY nombre;
@@ -14,10 +17,23 @@ SELECT * FROM producto WHERE pendiente = 1 ORDER BY id;
 obtener:
 SELECT * FROM producto WHERE id = ?;
 insertar:
-INSERT OR REPLACE INTO producto VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO producto (id, nombre, precio, stock, categoriaId, pendiente, eliminado) VALUES (?, ?, ?, ?, ?, ?, ?);
 borrar:
 DELETE FROM producto WHERE id = ?;
 borrarSincronizados:
 DELETE FROM producto WHERE pendiente = 0;
 siguienteIdLocal:
 SELECT COALESCE(MIN(id), 0) FROM producto;
+
+pendientesPorEnviar:
+SELECT * FROM producto WHERE pendiente = 1 AND intentos < :maxIntentos AND proximoIntento <= :ahora ORDER BY id;
+contarPendientes:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos < :maxIntentos;
+listarFallidas:
+SELECT * FROM producto WHERE pendiente = 1 AND intentos >= :maxIntentos ORDER BY id;
+sumarIntento:
+UPDATE producto SET intentos = intentos + 1, ultimoError = :error, proximoIntento = :proximo WHERE id = :id;
+marcarFallida:
+UPDATE producto SET intentos = :maxIntentos, ultimoError = :error WHERE id = :id;
+reintentar:
+UPDATE producto SET intentos = 0, ultimoError = NULL, proximoIntento = 0 WHERE id = :id AND pendiente = 1;

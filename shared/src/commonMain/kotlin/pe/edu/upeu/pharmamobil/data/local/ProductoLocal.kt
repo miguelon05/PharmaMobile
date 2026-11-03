@@ -16,6 +16,20 @@ class ProductoLocal(base: PharmaDb, private val dispatcher: CoroutineDispatcher 
     fun registrarSincronizacion(instante: Long) { sincronizacion.guardar(instante) }
     fun observar() = q.listarTodos().asFlow().mapToList(dispatcher).map { filas -> filas.map { it.aDominio() } }
     fun listar() = q.listarTodos().executeAsList().map { it.aDominio() }
+    fun pendientesPorEnviar(ahora: Long) = q.pendientesPorEnviar(5, ahora).executeAsList()
+    fun sumarIntento(id: Long, error: String, proximo: Long) = q.sumarIntento(error, proximo, id)
+    fun marcarFallida(id: Long, error: String) = q.marcarFallida(5, error, id)
+    fun reintentar(id: Long) = q.reintentar(id)
+    fun observarEstado() = kotlinx.coroutines.flow.combine(
+        q.contarPendientes(5).asFlow().mapToList(dispatcher),
+        q.listarFallidas(5).asFlow().mapToList(dispatcher)
+    ) { pendientes, fallidas ->
+        pe.edu.upeu.pharmamobil.domain.model.EstadoSincronizacion(
+            pendientes.first().toInt(), fallidas.map {
+                pe.edu.upeu.pharmamobil.domain.model.FilaFallida(it.id, it.nombre, it.ultimoError.orEmpty())
+            }
+        )
+    }
     fun pendientes() = q.listarPendientes().executeAsList()
     fun obtener(id: Long) = q.obtener(id).executeAsOne().aDominio()
     fun guardar(producto: Producto, nuevo: Boolean = false): Producto = q.transactionWithResult {
