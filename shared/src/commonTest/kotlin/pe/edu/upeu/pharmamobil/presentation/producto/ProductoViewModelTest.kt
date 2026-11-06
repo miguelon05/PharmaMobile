@@ -28,6 +28,36 @@ class ProductoViewModelTest {
 
     private val dummyCompartidor = object : Compartidor { override fun compartir(texto: String) {} }
 
+    @Test
+    fun guardarSinRedEsperaLaReconexionParaEnviar() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val red = kotlinx.coroutines.flow.MutableStateFlow(false)
+        val base = FakeProductoRepository()
+        var envios = 0
+        val repo = object : pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository by base {
+            override suspend fun sincronizar() { envios++; base.sincronizar() }
+        }
+        val vm = ProductoViewModel(
+            RegistrarProductoUseCase(repo), ListarProductosUseCase(repo),
+            ActualizarProductoUseCase(repo), EliminarProductoUseCase(repo), dummyCompartidor,
+            conectividad = object : pe.edu.upeu.pharmamobil.domain.platform.Conectividad {
+                override fun observar() = red
+            }
+        )
+        advanceUntilIdle()
+        val iniciales = envios
+        vm.onNombreChange("Pendiente sin red")
+        vm.onPrecioChange("12")
+        vm.onStockChange("3")
+        vm.registrar()
+        advanceUntilIdle()
+        assertEquals(1, base.listar().size)
+        assertEquals(iniciales, envios)
+        red.value = true
+        advanceUntilIdle()
+        assertEquals(iniciales + 1, envios)
+    }
+
     @AfterTest
     fun restaurarMain() {
         Dispatchers.resetMain()

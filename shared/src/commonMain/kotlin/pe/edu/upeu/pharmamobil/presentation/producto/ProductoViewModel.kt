@@ -74,6 +74,10 @@ class ProductoViewModel(
     fun cargarProductos() = sincronizar()
 
     fun sincronizar() {
+        if (_uiState.value.conectado == false) {
+            _uiState.update { it.copy(avisoRed = "Sin conexión: mostrando datos guardados") }
+            return
+        }
         if (carga?.isActive == true) return
         carga = viewModelScope.launch {
             _uiState.update { it.copy(sincronizando = true) }
