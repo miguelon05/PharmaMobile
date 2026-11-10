@@ -30,8 +30,9 @@ val apiUrl = providers.gradleProperty("pharmaApiUrl").orElse("http://10.0.2.2:80
 val firmaDisponible = firma.isNotEmpty()
 tasks.configureEach {
     if (name == "packageRelease" || name == "packageReleaseBundle") {
+        val tieneFirma = firmaDisponible
         doFirst {
-            check(firmaDisponible) { "Configura keystore.properties para generar una entrega firmada." }
+            check(tieneFirma) { "Configura keystore.properties para generar una entrega firmada." }
         }
     }
 }
