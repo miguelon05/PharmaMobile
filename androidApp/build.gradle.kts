@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -21,7 +22,29 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
 
+val firma = Properties().apply {
+    val archivo = rootProject.file("keystore.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+val apiUrl = providers.gradleProperty("pharmaApiUrl").orElse("http://10.0.2.2:8080/api/v1/")
+val firmaDisponible = firma.isNotEmpty()
+tasks.configureEach {
+    if (name == "packageRelease" || name == "packageReleaseBundle") {
+        doFirst {
+            check(firmaDisponible) { "Configura keystore.properties para generar una entrega firmada." }
+        }
+    }
+}
+
 android {
+    signingConfigs {
+        if (firma.isNotEmpty()) create("release") {
+            storeFile = rootProject.file(firma.getProperty("storeFile"))
+            storePassword = firma.getProperty("storePassword")
+            keyAlias = firma.getProperty("keyAlias")
+            keyPassword = firma.getProperty("keyPassword")
+        }
+    }
     namespace = "pe.edu.upeu.pharmamobil"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
@@ -30,7 +53,8 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+        resValue("string", "pharma_api_url", apiUrl.get())
     }
     packaging {
         resources {
@@ -39,7 +63,8 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,6 +76,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        resValues = true
         compose = true
     }
 }

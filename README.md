@@ -1,5 +1,30 @@
 This is a Kotlin Multiplatform project targeting Android, iOS.
 
+## Entrega Android, sesión 14
+
+Versión 1.0.0, código 1, identificador pe.edu.upeu.pharmamobil.
+La rama feature/builds-14 parte de develop, creada desde feature/integrador-13.
+El alcance comprende autenticación, CRUD, sincronización y permisos existentes.
+iOS y evidencias quedan aplazados por indicación del usuario. La ficha de sesión
+13 requiere contrastar pendientes con pruebas reales antes de cerrarse.
+
+Crear keystore.properties local con storeFile (ruta absoluta al almacén),
+storePassword, keyAlias y keyPassword. Estos archivos están excluidos de Git.
+Guardar un respaldo privado de la clave fuera de esta computadora.
+Debug puede compilar sin credenciales. Release requiere firma.
+
+Compilar sustituyendo la dirección por la del servidor accesible desde el teléfono:
+
+```powershell
+.\gradlew.bat :shared:testAndroidHostTest :androidApp:assembleRelease :androidApp:bundleRelease -PpharmaApiUrl=http://IP_DEL_SERVIDOR:8080/api/v1/ --max-workers=2
+```
+
+La URL predeterminada corresponde al emulador. La configuración HTTP se conserva
+para el servidor del curso. La dirección debe ser accesible al instalar el APK.
+La minificación está activada. Recorrer el APK release en teléfonos reales antes
+de validar la entrega. La recepción de Crashlytics requiere comprobación.
+Etiquetar v1.0-final solo después de verificar el build y su commit definitivo.
+
 ## Autenticación JWT y Almacenamiento Seguro
 
 Sincronización completa del sistema de autenticación contra el backend PharmaSoft (`POST /api/v1/auth/login` y `GET /api/v1/auth/me`):

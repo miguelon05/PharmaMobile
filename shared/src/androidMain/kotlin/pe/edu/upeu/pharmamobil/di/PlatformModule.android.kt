@@ -25,8 +25,9 @@ actual val platformModule: Module = module {
     single<HttpClientEngine> { OkHttp.create() } onClose { it?.close() }
     single {
         ApiConfig(
-            // Host del equipo anfitrión desde el emulador Android.
-            baseUrl = "http://10.0.2.2:8080/api/v1/",
+            baseUrl = androidContext().getString(androidContext().resources.getIdentifier(
+                "pharma_api_url", "string", androidContext().packageName
+            )),
             loggingEnabled = androidContext().applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         )
     }

@@ -22,3 +22,6 @@ __pycache__/
 
 # Configuracion local de Firebase Android
 /androidApp/google-services.json
+keystore.properties
+*.jks
+*.keystore
