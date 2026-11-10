@@ -53,9 +53,13 @@ class ProductoViewModelTest {
         advanceUntilIdle()
         assertEquals(1, base.listar().size)
         assertEquals(iniciales, envios)
-        red.value = true
+        // El reintento manual consulta el servidor aunque el monitor conserve false.
+        vm.sincronizar()
         advanceUntilIdle()
         assertEquals(iniciales + 1, envios)
+        red.value = true
+        advanceUntilIdle()
+        assertEquals(iniciales + 2, envios)
     }
 
     @AfterTest

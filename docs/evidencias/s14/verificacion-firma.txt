@@ -1,0 +1,12 @@
+Verificación del APK PharmaMobil Acevedo 1.0.1
+
+Comando:
+apksigner verify --print-certs output/android-s14/PharmaMobil_Acevedo_1.0.1.apk
+
+Resultado:
+Signer #1 certificate DN: CN=PharmaMobil Acevedo, O=PharmaMobil, C=PE
+Signer #1 certificate SHA-256 digest: 515122fa8d8db57bdced119beb0b0c6584fb9d07518e518b1db9ca70c379709e
+Signer #1 certificate SHA-1 digest: ceaf32379faab950bff3a370f4edc0316f8cfd94
+Signer #1 certificate MD5 digest: c0a7a9017b210792eb2f71bd5bf3edc7
+
+La guía solicita además una captura de pantalla con el titular y la huella visibles.

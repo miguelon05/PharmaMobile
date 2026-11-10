@@ -2,7 +2,7 @@ This is a Kotlin Multiplatform project targeting Android, iOS.
 
 ## Entrega Android, sesión 14
 
-Versión 1.0.0, código 1, identificador pe.edu.upeu.pharmamobil.
+Versión 1.0.1, código 2, identificador pe.edu.upeu.pharmamobil.
 La rama feature/builds-14 parte de develop, creada desde feature/integrador-13.
 El alcance comprende autenticación, CRUD, sincronización y permisos existentes.
 iOS y evidencias quedan aplazados por indicación del usuario. La ficha de sesión
@@ -24,6 +24,17 @@ para el servidor del curso. La dirección debe ser accesible al instalar el APK.
 La minificación está activada. Recorrer el APK release en teléfonos reales antes
 de validar la entrega. La recepción de Crashlytics requiere comprobación.
 Etiquetar v1.0-final solo después de verificar el build y su commit definitivo.
+
+Build de revisión firmado generado el 10/11/2026:
+
+- `output/android-s14/PharmaMobil_Acevedo_1.0.1.apk` (instalable)
+- `output/android-s14/PharmaMobil_Acevedo_1.0.1.aab` (paquete Android)
+- Evidencias y pendientes: `docs/evidencias/s14/estado-entrega.md`
+
+El APK se instaló y abrió en un Xiaomi 24115RA8EG. El recorrido funcional
+completo, la prueba en un segundo dispositivo y la conexión real al backend
+siguen pendientes. El build de revisión apunta al servidor LAN configurado al
+compilar; hay que recompilar con la URL adecuada para cada entorno.
 
 ## Autenticación JWT y Almacenamiento Seguro
 

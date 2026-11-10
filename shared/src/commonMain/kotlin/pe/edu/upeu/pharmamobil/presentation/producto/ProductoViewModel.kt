@@ -74,10 +74,6 @@ class ProductoViewModel(
     fun cargarProductos() = sincronizar()
 
     fun sincronizar() {
-        if (_uiState.value.conectado == false) {
-            _uiState.update { it.copy(avisoRed = "Sin conexión: mostrando datos guardados") }
-            return
-        }
         if (carga?.isActive == true) return
         carga = viewModelScope.launch {
             _uiState.update { it.copy(sincronizando = true) }
@@ -183,7 +179,7 @@ class ProductoViewModel(
             }
 
             resultado.onSuccess { producto ->
-                sincronizar()
+                if (_uiState.value.conectado != false) sincronizar()
                 _uiState.update {
                     it.copy(
                         operacion = ProductoUiState.Operacion.Inactiva,
@@ -200,7 +196,7 @@ class ProductoViewModel(
             _uiState.update { it.copy(operacion = ProductoUiState.Operacion.EnCurso(ProductoUiState.Operacion.Tipo.Eliminar)) }
             eliminarProductoUseCase(id)
                 .onSuccess {
-                    sincronizar()
+                    if (_uiState.value.conectado != false) sincronizar()
                     _uiState.update {
                         it.copy(operacion = ProductoUiState.Operacion.Inactiva, mensajeExito = "Producto eliminado")
                     }

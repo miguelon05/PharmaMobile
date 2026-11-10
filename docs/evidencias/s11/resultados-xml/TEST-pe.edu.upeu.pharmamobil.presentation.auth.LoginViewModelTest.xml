@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="pe.edu.upeu.pharmamobil.presentation.auth.LoginViewModelTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:58:20.710Z" hostname="MIGUELON" time="0.007">
+  <properties/>
+  <testcase name="loginExitosoInformaASesion" classname="pe.edu.upeu.pharmamobil.presentation.auth.LoginViewModelTest" time="0.006"/>
+  <testcase name="rechazaCamposVaciosEnFormulario" classname="pe.edu.upeu.pharmamobil.presentation.auth.LoginViewModelTest" time="0.001"/>
+  <system-out><![CDATA[LoginViewModel: Enviando credenciales para admin...
+LoginViewModel: Login exitoso para admin
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

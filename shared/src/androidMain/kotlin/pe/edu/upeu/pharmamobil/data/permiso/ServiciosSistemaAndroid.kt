@@ -20,7 +20,7 @@ class ConectividadAndroid(private val contexto: Context) : Conectividad {
         fun emitir() { trySend(gestor.getNetworkCapabilities(gestor.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true) }
         val callback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) = emitir()
-            override fun onLost(network: Network) { trySend(false) }
+            override fun onLost(network: Network) = emitir()
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) = emitir()
         }
         gestor.registerDefaultNetworkCallback(callback)

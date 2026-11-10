@@ -1,0 +1,35 @@
+{
+  "fecha_hora": "2026-10-23T12:01:14.740564-05:00",
+  "plataforma": "Android / Pixel 7a",
+  "modo_avion": "0",
+  "productos": [
+    {
+      "id": 1,
+      "nombre": "paracetamol",
+      "precio": 12.0,
+      "stock": 10,
+      "categoriaId": 1,
+      "pendiente": 0,
+      "eliminado": 0
+    },
+    {
+      "id": 41,
+      "nombre": "pastilla",
+      "precio": 12.0,
+      "stock": 3,
+      "categoriaId": 1,
+      "pendiente": 0,
+      "eliminado": 0
+    },
+    {
+      "id": 42,
+      "nombre": "ibuprofeno",
+      "precio": 30.0,
+      "stock": 4,
+      "categoriaId": 1,
+      "pendiente": 0,
+      "eliminado": 0
+    }
+  ],
+  "sincronizacion": "Pendiente de abrir/migrar la base desde Productos"
+}

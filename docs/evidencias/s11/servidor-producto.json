@@ -1,0 +1,11 @@
+{
+  "id": 61,
+  "nombre": "S11_Offline_Acevedo",
+  "precio": 4.5,
+  "stock": 7,
+  "estado": true,
+  "categoriaId": 1,
+  "categoriaNombre": "Medicamentos",
+  "fechaCreacion": "2026-10-23T16:21:37.343366",
+  "fechaModificacion": null
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:58:20.450Z" hostname="MIGUELON" time="0.073">
+  <properties/>
+  <testcase name="identificadoresLocalesYRemotosNoColisionan" classname="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" time="0.015"/>
+  <testcase name="reconexionEnviaPendienteYConfirmaIdReal" classname="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" time="0.02"/>
+  <testcase name="registroSinRedQuedaPendienteYVisible" classname="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" time="0.007"/>
+  <testcase name="bajadaNoBorraLasFilasPendientes" classname="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" time="0.01"/>
+  <testcase name="sincronizacionConRedGuardaServidorYEmiteFlow" classname="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" time="0.01"/>
+  <testcase name="sincronizarDosVecesNoDuplicaFilas" classname="pe.edu.upeu.pharmamobil.data.repository.S11OfflineTest" time="0.011"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
